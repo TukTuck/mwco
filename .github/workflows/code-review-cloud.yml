@@ -1,0 +1,36 @@
+# ──────────────────────────────────────────────────────────
+# Option C: Cloud API (wenn Ollama gerade nicht läuft)
+# ──────────────────────────────────────────────────────────
+#
+# Setup:
+# 1. Kostenlosen Groq API Key holen: https://console.groq.com
+# 2. GROQ_API_KEY Secret setzen
+#
+# Vorteile:
+# - Kein eigener Server nötig
+# - Groq ist extrem schnell (LPU-Hardware)
+# - Llama 3.1 70B (sehr stark)
+# - Komplett kostenlos mit Rate-Limits
+#
+# Aktivieren: Diese Datei umbenennen zu code-review.yml
+
+name: AI Code Review (Groq Cloud – Free)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: AI Code Review (Robin + Groq)
+        uses: antongulin/robin@main
+        with:
+          llm-api-key: ${{ secrets.GROQ_API_KEY }}
+          llm-base-url: "https://api.groq.com/openai/v1"
+          llm-model: "llama-3.1-70b-versatile"

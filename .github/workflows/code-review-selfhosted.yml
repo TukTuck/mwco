@@ -1,0 +1,48 @@
+# ──────────────────────────────────────────────────────────
+# Option B: Self-hosted Runner auf der Ollama-VM
+# ──────────────────────────────────────────────────────────
+#
+# Setup:
+# 1. GitHub Self-hosted Runner auf der Ollama-VM installieren:
+#    → Repo Settings → Actions → Runners → New self-hosted runner
+#    → Anweisungen folgen (Linux x64)
+#    → Runner als Service installieren (--runasservice)
+# 2. OLLAMA_MODEL Secret setzen: qwen2.5-coder:32b
+#
+# Vorteile:
+# - Keine Tailscale-Konfiguration nötig
+# - Ollama ist lokal auf dem gleichen Rechner (schnell!)
+# - Kein Code verlässt je die VM
+# - Keine Cloud-Kosten
+#
+# Aktivieren: Diese Datei umbenennen zu code-review.yml
+#             (und die andere Option löschen)
+
+name: AI Code Review (Ollama Self-hosted)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    # Läuft auf deinem eigenen Runner (die Ollama-VM)
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Ollama is running
+        run: |
+          curl -s http://localhost:11434/api/tags || {
+            echo "❌ Ollama nicht erreichbar. Starte: ollama serve"
+            exit 1
+          }
+
+      - name: AI Code Review (Robin + lokales Ollama)
+        uses: antongulin/robin@main
+        with:
+          llm-api-key: "ollama"
+          llm-base-url: "http://localhost:11434/v1"
+          llm-model: ${{ secrets.OLLAMA_MODEL }}
