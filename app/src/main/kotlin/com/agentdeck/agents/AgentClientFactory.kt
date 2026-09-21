@@ -11,7 +11,14 @@ import com.agentdeck.core.domain.*
 
 /**
  * Factory that creates and configures all available agent clients.
- * Reads API keys from SecureKeyStore and only creates clients for configured agents.
+ *
+ * ## Prinzip:
+ * Liest API-Keys aus [SecureKeyStore] und erstellt nur Clients für konfigurierte Agenten.
+ * Wenn kein Key vorhanden → Agent wird nicht registriert → Orchestrator kann ihn nicht nutzen.
+ *
+ * ## Arena-Sonderfall:
+ * Arena braucht keinen API-Key (Session-basiert) → immer registriert.
+ * Aber: Arena-Client ist im MVP nur ein Mock (keine echte API-Integration).
  */
 object AgentClientFactory {
 

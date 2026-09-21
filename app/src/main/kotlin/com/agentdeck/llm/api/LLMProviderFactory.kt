@@ -8,7 +8,20 @@ import com.agentdeck.llm.remote.OpenAIProvider
 
 /**
  * Factory for creating LLM providers based on configuration.
- * Supports local models (ONNX, llama.cpp) and remote APIs.
+ *
+ * ## Auto-Detection:
+ * [getRecommendedConfig] wählt automatisch den besten Provider basierend auf:
+ * - Verfügbarer RAM (Device-Capability)
+ * - Vorhandener API-Key (Remote bevorzugt wenn vorhanden)
+ *
+ * ## Fallback-Strategie (in [com.agentdeck.di.AppModule] implementiert):
+ * 1. Nvidia NIM (wenn API-Key vorhanden) – immer verfügbar, kostenlos
+ * 2. OpenAI (wenn API-Key vorhanden) – zuverlässig, kostet Geld
+ * 3. null (kein Provider) – rein regelbasierte Orchestrierung
+ *
+ * ## Warum keine lokale Auto-Detection im MVP?
+ * Lokale Modelle brauchen vorherigen Download (Assets oder Runtime).
+ * Im MVP nutzen wir nur Remote-APIs, lokale Provider sind nur Mocks.
  */
 object LLMProviderFactory {
     

@@ -10,8 +10,15 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Blueprint Editor Screen.
- * Allows users to create and edit blueprints as free text.
- * The text is parsed into a structured Blueprint object.
+ *
+ * ## Design-Entscheidung: Freitext statt Formular
+ * - Formular: Zu starr, User muss alle Felder ausfüllen
+ * - Freitext: Flexibel, User schreibt natürlich
+ * - Parser im ViewModel extrahiert Struktur automatisch
+ *
+ * ## Template:
+ * Ein vordefiniertes Template hilft dem User zu verstehen welches Format erwartet wird.
+ * Der Parser erkennt Abschnitte wie "Projekt:", "Ziel:", "Technologie:", "Kernmodule:", "Ablauf:".
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -4,7 +4,15 @@ import kotlinx.serialization.Serializable
 
 /**
  * A Blueprint is the master plan that drives orchestration.
- * It defines the goal, constraints, modules, and preferred flow.
+ *
+ * ## Woher kommt der Blueprint?
+ * Der User schreibt ihn als Freitext im [com.agentdeck.ui.blueprint.BlueprintEditorScreen].
+ * Der [com.agentdeck.ui.navigation.BlueprintEditorViewModel] parst den Text in diese Struktur.
+ *
+ * ## Warum nicht direkt JSON?
+ * Freitext ist user-friendlicher. Die Struktur wird automatisch extrahiert.
+ * Intern könnte man den Blueprint zu JSON normalisieren (für LLM-Kontext),
+ * aber die Domain-Klasse bleibt Kotlin-first.
  */
 @Serializable
 data class Blueprint(

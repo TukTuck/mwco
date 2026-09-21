@@ -2,7 +2,18 @@ package com.agentdeck.core.common
 
 /**
  * Rate limiter to prevent API abuse and manage costs.
- * Tracks requests per agent and per time window.
+ *
+ * ## Warum pro Instanz?
+ * Jeder Agent hat eigene Rate-Limits (Claude: 50 req/min, OpenAI: variabel).
+ * Deshalb wird pro Agent ein eigener [RateLimiter] erzeugt.
+ *
+ * ## Zwei Dimensionen:
+ * - **Requests/Minute:** Schützt vor API-Bans
+ * - **Tokens/Stunde:** Schützt vor Kosten-Explosion
+ *
+ * ## Integration:
+ * Der Orchestrator prüft [canMakeRequest] BEVOR er einen Task dispatched.
+ * Wenn false → [getWaitTime] sagt wann der nächste Versuch möglich ist.
  */
 class RateLimiter(
     private val maxRequestsPerMinute: Int = 60,

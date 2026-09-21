@@ -5,7 +5,17 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Interface for communicating with remote or local agents.
- * Each agent type (Arena, Claude, ChatGPT, WebSocket) implements this.
+ *
+ * ## Implementierungen:
+ * - [com.agentdeck.agents.claude.ClaudeAgentClient] – Anthropic Claude API
+ * - [com.agentdeck.agents.chatgpt.ChatGPTAgentClient] – OpenAI ChatGPT API
+ * - [com.agentdeck.agents.arena.ArenaAgentClient] – Arena AI (Mock im MVP)
+ * - [com.agentdeck.agents.websocket.WebSocketAgentClient] – Generische WebSocket-Bridge
+ *
+ * ## Contract:
+ * - [executeTask] blockiert bis der Agent fertig ist (oder Timeout)
+ * - [streamProgress] liefert Live-Updates (optional, für UI)
+ * - [cancelTask] ist Best-Effort (nicht alle APIs unterstützen das)
  */
 interface AgentClient {
     val agent: Agent

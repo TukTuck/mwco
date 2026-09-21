@@ -12,11 +12,30 @@ import timber.log.Timber
 import java.util.UUID
 
 /**
- * The main Orchestrator that manages the state machine and coordinates agents.
- * Uses a hybrid approach: deterministic state machine + optional LLM for soft logic.
+ * The main Orchestrator – Herzstück der App.
+ *
+ * ## Hybrid-Ansatz (Regeln + LLM):
+ * - **Regel-Engine:** State-Transitions, Dependency-Checking, Retry-Logik (deterministisch)
+ * - **LLM (optional):** Task-Decomposition, Task-Formulierung (flexibel)
+ *
+ * ## Warum Hybrid?
+ * - Reines LLM: Zu unzuverlässig, halluziniert Tasks, kein deterministischer State
+ * - Reine Regeln: Zu starr, kann keine intelligenten Task-Zerlegungen
+ * - Hybrid: Regeln für harte Logik + LLM für weiche Aufgaben
+ *
+ * ## Null-Safety für LLM:
+ * [llmProvider] ist nullable – wenn null, läuft der Orchestrator rein regelbasiert.
+ * Das ist der Fallback für Devices ohne API-Key oder ohne lokales Modell.
+ *
+ * ## Concurrency:
+ * Der Orchestrator dispatched Tasks parallel an verschiedene Agenten.
+ * [onTaskCompleted] und [onTaskFailed] können von verschiedenen Coroutines aufgerufen werden.
+ * State-Updates sind über [MutableStateFlow] thread-safe.
  */
 class Orchestrator(
+    /** LLM für Task-Decomposition. Null = rein regelbasiert (Fallback). */
     private val llmProvider: LLMProvider?,
+    /** Map von Agent-ID zu Agent-Client. Leer = keine Agenten konfiguriert. */
     private val agentClients: Map<String, com.agentdeck.agents.api.AgentClient> = emptyMap()
 ) {
     private val json = Json { 
@@ -130,9 +149,17 @@ class Orchestrator(
         val dependsOn: List<String> = emptyList()
     )
     
+    /**
+     * Parse LLM-Output als Task-Liste.
+     *
+     * ## Warum so defensiv?
+     * LLMs wrappen JSON oft in Markdown-Codeblöcke (```json ... ```) oder
+     * fügen Erklärungen hinzu. Diese Methode cleaned das und fällt bei
+     * Parse-Fehlern auf die regelbasierte Decomposition zurück.
+     */
     private fun parseTasksFromJSON(jsonString: String, blueprint: Blueprint): List<Task> {
         return try {
-            // Clean up the response - extract JSON array if wrapped
+            // LLMs wrappen JSON oft in Markdown – hier wird das bereinigt
             val cleanedJson = jsonString
                 .trim()
                 .removePrefix("```json")
@@ -159,6 +186,18 @@ class Orchestrator(
         }
     }
     
+    /**
+     * Regelbasierte Task-Zerlegung – Fallback wenn kein LLM verfügbar ist.
+     *
+     * ## Strategie:
+     * - Jedes Blueprint-Modul wird zu einem Task
+     * - Dependencies sind linear (Task 2 hängt von Task 1 ab, etc.)
+     * - Erster Task hat HIGH Priority, Rest MEDIUM
+     *
+     * ## Limitation:
+     * Dies ist eine simple 1:1-Abbildung. Das LLM kann intelligentere
+     * Zerlegungen machen (parallele Tasks, Sub-Tasks, etc.).
+     */
     private fun decomposeWithRules(blueprint: Blueprint): List<Task> {
         val defaultAgent = agentClients.keys.firstOrNull() ?: "unknown"
         
@@ -170,11 +209,12 @@ class Orchestrator(
                     description = "Erstelle das Modul $module gemäß Blueprint-Spezifikation.\n\nBlueprint-Kontext:\n${blueprint.goal}",
                     agentId = selectAgentForModule(module, defaultAgent),
                     priority = if (index == 0) Priority.HIGH else Priority.MEDIUM,
+                    // Lineare Dependencies: jeder Task hängt vom vorherigen ab
                     dependsOn = if (index > 0) listOf("task_${String.format("%03d", index)}") else emptyList()
                 )
             }
         } else {
-            // If no modules defined, create a single task from the goal
+            // Kein Module definiert → ein einziger Task aus dem Gesamtziel
             listOf(
                 Task(
                     id = "task_001",
@@ -315,7 +355,16 @@ class Orchestrator(
     }
     
     /**
-     * Handle task failure
+     * Handle task failure with automatic retry.
+     *
+     * ## Retry-Strategie:
+     * - Max 3 Versuche (configurable via [Task.maxRetries])
+     * - Bei Retry: Task geht zurück auf QUEUED, wird neu dispatched
+     * - Nach maxRetries: Task wird als FAILED markiert, Orchestrierung läuft weiter
+     *
+     * ## Warum kein Exponential Backoff?
+     * Backoff wird vom [com.agentdeck.service.TaskWorker] (WorkManager) gehandhabt,
+     * nicht vom Orchestrator direkt. Der Orchestrator entscheidet nur OB retried wird.
      */
     fun onTaskFailed(taskId: String, error: String) {
         val currentState = _state.value
@@ -327,6 +376,7 @@ class Orchestrator(
         if (failedTask.canRetry) {
             Timber.w("Task $taskId failed, retrying (${failedTask.retryCount + 1}/${failedTask.maxRetries}): $error")
             
+            // Task zurück auf QUEUED → wird beim nächsten dispatchNext() neu dispatched
             val updatedTask = failedTask.copy(
                 status = TaskStatus.QUEUED,
                 retryCount = failedTask.retryCount + 1,

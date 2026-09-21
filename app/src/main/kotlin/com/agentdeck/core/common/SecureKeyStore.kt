@@ -9,9 +9,20 @@ import java.security.KeyStore
 
 /**
  * Secure storage for API keys and sensitive data.
- * Uses Android Keystore + EncryptedSharedPreferences.
- * 
- * Keys are NEVER stored in plain text.
+ *
+ * ## Warum EncryptedSharedPreferences?
+ * - Normale SharedPreferences = Klartext (root-Zugriff kann lesen)
+ * - EncryptedSharedPreferences = AES256-GCM verschlüsselt
+ * - Master-Key liegt im Android Keystore (Hardware-backed wenn verfügbar)
+ *
+ * ## Was wird gespeichert:
+ * - API-Keys für Nvidia NIM, OpenAI, Claude
+ * - LLM-Provider-Konfiguration (welcher Provider, welches Modell)
+ *
+ * ## Was NICHT hier gespeichert wird:
+ * - Blueprints/Tasks (→ Room Database)
+ * - Agent-Ergebnisse (→ Room Database)
+ * - Session-Tokens (→ Memory only, nie persistieren)
  */
 class SecureKeyStore(private val context: Context) {
     

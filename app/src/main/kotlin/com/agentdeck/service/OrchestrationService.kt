@@ -13,9 +13,27 @@ import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Foreground Service that keeps the orchestrator running even when the app is in background.
- * Required for persistent agent monitoring and task execution.
- * 
- * Android kills background processes aggressively - this service prevents that.
+ *
+ * ## Warum Foreground Service?
+ * Android killt Background-Prozesse aggressiv:
+ * - Doze Mode (nach ~30 Min Screen-Off)
+ * - App Standby (wenn App nicht genutzt wird)
+ * - Memory Pressure (wenn RAM knapp wird)
+ *
+ * Foreground Service mit Notification = Android behandelt die App als "wichtig"
+ * und killt sie nur im Extremfall (sehr wenig RAM).
+ *
+ * ## Notification-Updates:
+ * Die Notification zeigt den aktuellen Orchestrierungs-Status:
+ * - "Tasks aktiv" + Anzahl
+ * - "⚠️ Eingabe benötigt" bei Blockaden
+ * - "✅ Fertig" bei Abschluss
+ * - "❌ Fehler" bei Fehlschlag
+ *
+ * ## Lifecycle:
+ * - [ACTION_START]: Startet den Service + Foreground-Notification
+ * - [ACTION_PAUSE]: Pausiert die Orchestrierung (Tasks bleiben im State)
+ * - [ACTION_STOP]: Stoppt den Service komplett
  */
 class OrchestrationService : Service() {
     

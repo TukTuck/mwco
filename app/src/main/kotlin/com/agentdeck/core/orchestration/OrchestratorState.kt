@@ -4,7 +4,23 @@ import com.agentdeck.core.domain.*
 
 /**
  * The state machine that drives orchestration.
- * This is the DETERMINISTIC core - no LLM needed for state transitions.
+ *
+ * ## Warum sealed class?
+ * - Exhaustive when-Expressions: Compiler prüft ob alle States behandelt werden
+ * - Keine invaliden States möglich (z.B. "Monitoring ohne aktive Tasks")
+ * - Immutable: State-Wechsel nur durch Erzeugen eines neuen State-Objekts
+ *
+ * ## State-Transitions:
+ * ```
+ * Idle → Planning → Dispatching ←→ Monitoring → Reviewing → Completed
+ *   ↑                                              ↓
+ *   └──────────── Failed ←── Blocked ←─────────────┘
+ * ```
+ *
+ * ## Wichtig:
+ * Dies ist der DETERMINISTISCHE Kern – State-Transitions brauchen KEIN LLM.
+ * Das LLM wird nur für "weiche" Aufgaben genutzt (Task-Formulierung, Decomposition).
+ * Wenn das LLM failt → Fallback auf regelbasierte Logik, State Machine läuft weiter.
  */
 sealed class OrchestratorState {
     abstract val blueprint: Blueprint?

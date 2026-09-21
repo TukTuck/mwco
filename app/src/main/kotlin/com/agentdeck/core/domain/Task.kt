@@ -4,6 +4,22 @@ import kotlinx.serialization.Serializable
 
 /**
  * A Task is a unit of work in the orchestration graph.
+ *
+ * ## Lifecycle:
+ * ```
+ * QUEUED → DISPATCHING → WORKING → REVIEWING → DONE
+ *                            ↓
+ *                          FAILED (mit Retry → zurück zu QUEUED)
+ *                            ↓
+ *                        CANCELLED
+ * ```
+ *
+ * ## Dependencies:
+ * [dependsOn] ist eine Liste von Task-IDs die vorher abgeschlossen sein müssen.
+ * Der Orchestrator dispatched nur Tasks deren Dependencies alle [TaskStatus.DONE] sind.
+ *
+ * ## Retry:
+ * Bei Failure wird [retryCount] inkrementiert. Wenn < [maxRetries] → zurück zu QUEUED.
  */
 @Serializable
 data class Task(

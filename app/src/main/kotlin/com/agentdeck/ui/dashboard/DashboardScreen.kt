@@ -13,6 +13,17 @@ import com.agentdeck.core.orchestration.OrchestratorState
 
 /**
  * Main dashboard showing orchestrator status, active tasks, and agents.
+ *
+ * ## Design-Entscheidung:
+ * Single-Screen-Overview – User sieht auf einen Blick:
+ * - Orchestrator-Status (Idle/Working/Blocked/Completed/Failed)
+ * - Aktive Tasks mit Fortschritt
+ * - Agenten-Verfügbarkeit
+ * - Blockaden (User-Input erforderlich)
+ *
+ * ## Warum kein Live-Update per WebSocket?
+ * Der State kommt über Compose State-Flows vom ViewModel.
+ * Das ist ausreichend – Tasks dauern Sekunden bis Minuten, nicht Millisekunden.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

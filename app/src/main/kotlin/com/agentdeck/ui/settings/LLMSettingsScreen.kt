@@ -14,7 +14,15 @@ import com.agentdeck.llm.api.LLMProviderFactory
 
 /**
  * Settings screen for configuring LLM providers.
- * Allows switching between local and remote providers.
+ *
+ * ## Provider-Auswahl:
+ * Der User wählt zwischen lokalen Modellen (Privacy, Offline) und Remote-APIs (Power, Einfachheit).
+ * API-Keys werden im [com.agentdeck.core.common.SecureKeyStore] gespeichert.
+ *
+ * ## Empfohlene Konfiguration:
+ * - Nvidia NIM für die meisten User (kostenlos, zuverlässig)
+ * - Lokales Qwen2.5-1.5B für Privacy-fokussierte User (braucht ~1.5GB RAM)
+ * - MiniLM als Minimum für sehr alte Devices (~80MB)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

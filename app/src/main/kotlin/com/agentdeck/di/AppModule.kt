@@ -22,6 +22,9 @@ import timber.log.Timber
 val appModule = module {
     
     // ── Database ──────────────────────────────
+    // Room als Singleton – eine Instanz für die ganze App.
+    // fallbackToDestructiveMigration: Bei Schema-Änderungen wird die DB gelöscht
+    // (akzeptabel im MVP, in Production: echte Migrations schreiben).
     single {
         Room.databaseBuilder(
             androidContext(),
@@ -47,6 +50,9 @@ val appModule = module {
     }
     
     // ── LLM Provider ──────────────────────────────
+    // Nullable: null = kein Provider = rein regelbasierte Orchestrierung.
+    // Priority: Nvidia NIM > OpenAI > null.
+    // Warum Nvidia NIM zuerst? Kostenlos mit Nvidia-Account, immer verfügbar.
     single<LLMProvider?> {
         val keyStore: SecureKeyStore = get()
         
