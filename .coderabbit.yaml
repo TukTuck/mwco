@@ -1,0 +1,61 @@
+# CodeRabbit Configuration
+# Siehe: https://docs.coderabbit.ai/guides/configure-coderabbit
+
+review_profile: THOROUGH
+
+reviews:
+  # Automatisch jeden PR reviewen
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+
+  # Welche Dateien prüfen / ignorieren
+  path_filters:
+    - "!*.lock"
+    - "!*.min.js"
+    - "!*.min.css"
+    - "!dist/**"
+    - "!build/**"
+    - "!node_modules/**"
+    - "!*.apk"
+    - "!*.aab"
+    - "!gradle/wrapper/gradle-wrapper.jar"
+
+  # Review-Schwerpunkte
+  review_status: true
+  collapse_walkthrough: false
+
+  # PR Summary automatisch generieren
+  poem: false
+  labels: true
+
+# Sprache der Review-Kommentare
+language: de
+
+# Spezielle Anweisungen für dieses Projekt
+instructions: |
+  Dieses Projekt ist "Agent Deck" – eine Android-App + PC-Bridge für AI-Agent-Orchestrierung.
+
+  Architektur-Kontext:
+  - Android-App: Kotlin + Jetpack Compose + Material 3
+  - PC-Bridge: Node.js + TypeScript + Electron + WebSocket
+  - LLM-Provider: Interface-basiert (lokal/remote austauschbar)
+  - Orchestrierung: State Machine + regelbasierte Task-Zerlegung
+  - MCP-Bus: Jedes Fenster hat eigenen MCP-Server
+
+  Review-Fokus:
+  - Sicherheit: API-Keys nie im Code, Pfad-Blocklisten prüfen
+  - Error-Handling: Result-Typen statt rohe Exceptions
+  - TypeScript: strict mode, keine `any`
+  - Kotlin: null-safety, coroutines korrekt nutzen
+  - Interfaces: Definieren die Verträge zwischen Streams – Änderungen müssen abgestimmt sein
+  - Tests: Neue Logik braucht Tests
+
+  Lies für Kontext:
+  - pc-bridge/docs/FINALE_ARCHITEKTUR.md
+  - pc-bridge/docs/PARALLEL_PLAN.md
+  - pc-bridge/docs/PAUL_SPEC.md
+
+chat:
+  auto_reply: true
