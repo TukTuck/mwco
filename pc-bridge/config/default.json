@@ -1,0 +1,34 @@
+{
+  "server": {
+    "port": 8765,
+    "host": "0.0.0.0",
+    "maxConnections": 5
+  },
+  "security": {
+    "requireAuth": true,
+    "authToken": "",
+    "allowedPaths": [],
+    "blockedPaths": [
+      "~/.ssh",
+      "~/.gnupg",
+      "~/.aws",
+      "~/.config/gcloud"
+    ],
+    "allowShellExecution": true,
+    "maxOutputSize": 1048576,
+    "executionTimeout": 300000
+  },
+  "discovery": {
+    "mdns": true,
+    "serviceName": "agent-deck-bridge",
+    "serviceType": "_agentdeck._tcp"
+  },
+  "logging": {
+    "level": "info",
+    "file": "bridge.log"
+  },
+  "workspace": {
+    "defaultPath": "",
+    "autoDetectGit": true
+  }
+}
