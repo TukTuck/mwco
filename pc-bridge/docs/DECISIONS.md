@@ -187,3 +187,28 @@ Jede größere Entscheidung, **warum** wir sie so getroffen haben, und welche Al
 - WAL-Mode für echte parallele Zugriffe
 - Auf dem Ziel-PC (Windows mit Build Tools) ist die Installation einmalig
 - Graceful Degradation wenn nicht verfügbar
+
+---
+
+## UI-Redesign: Vom starren Grid zum Kartentisch (22.09.2026)
+
+**Entscheidung:** Die ursprüngliche 4×3-Grid-UI wird durch eine freie, zoom-/pannbare
+„Kartentisch"-Oberfläche ersetzt (siehe `design/DESIGN_SPEC.md` und `src/ui/`).
+
+**Warum:**
+- Der User denkt in **freien Flächen**, nicht in starren Rastern: Elemente liegen als
+  Kacheln („Skill-Bilder") auf einem Tisch und werden erst beim Rausziehen zu Fenstern.
+- Drei Stufen pro Element (Node → aufgeklappte Karte → Fenster) bilden die
+  gewünschte Progression „klein anfangen, bei Bedarf wachsen" ab.
+- Verbindungslinien (n8n/OmniRoute-Anmutung) machen sichtbar, **dass etwas getan wird**.
+- Linke Sidebar + obere Leiste wie in der Referenz („Schattenwerk"), bewusst **keine**
+  rechte/untere Leiste. Warmer, dunkler Farbton statt kühlem Blau/Schwarz.
+
+**Verworfen:**
+- Starres CSS-Grid mit Auto-Sort (alte UI) – zu starr, kein Flow.
+- Fenster-mit-Titelbalken-von-Anfang-an – der User will erst Kacheln, Fenster nur explizit.
+
+**Konsequenzen:**
+- `gridStore.ts`/`Grid.tsx` etc. entfernt; neuer `store/deck.ts` (zustand).
+- Layout + Verbindungen sollen später in die bestehende `layouts`-Tabelle persistiert werden.
+- Offene Punkte (Verbindungen selbst setzen/benennen) stehen in `design/DESIGN_SPEC.md`.

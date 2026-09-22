@@ -21,4 +21,4 @@ Paul (MCP-Chat), LLM-Routen, Austausch (Mesh/IP-Tabellen), WebChat (kein MCP), T
 - [ ] **Verbindungen benennen:** eigene Labels pro Linie (was fließt da?).
 - [ ] Karten selbst anlegen/löschen/umbenennen („alles Mögliche").
 - [ ] Persistenz: Tisch-Layout + Verbindungen in SQLite (`layouts`-Tabelle existiert bereits im Backend).
-- [ ] Danach: Prototyp in die echte React-UI von `pc-bridge/src/ui` portieren.
+- [x] Prototyp in die echte React-UI von `pc-bridge/src/ui` portieren. ✅ (22.09.2026: Sidebar, Topbar, Tisch, Launcher, alle Ansichten gebaut; `npm run dev:ui` zum Testen)

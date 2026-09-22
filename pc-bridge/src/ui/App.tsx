@@ -1,51 +1,50 @@
 // SPDX-License-Identifier: MIT
 /**
- * App – Root-Komponente der Agent Deck UI.
+ * App – Root: Sidebar links + Topbar oben + Ansicht. Kein rechter/linker Rand unten.
  */
-
-import React, { useState, useCallback } from 'react';
-import { Grid } from './components/Grid';
-import { Toolbar } from './components/Toolbar';
-import { createGridStore, type GridState } from './store/gridStore';
+import { useEffect } from 'react';
+import { useDeck } from './store/deck';
+import { Sidebar } from './components/Sidebar';
+import { Topbar } from './components/Topbar';
+import { Launcher } from './components/Launcher';
+import { TischView } from './components/tisch/TischView';
+import { ProtokolleView } from './views/ProtokolleView';
+import { EinstellungenView } from './views/EinstellungenView';
+import { AustauschView } from './views/AustauschView';
+import { TasksView } from './views/TasksView';
+import { ZeitplanView } from './views/ZeitplanView';
 
 export function App() {
-  const [state] = useState<GridState>(() => createGridStore());
-  const [, forceUpdate] = useState(0);
+  const view = useDeck((s) => s.view);
+  const setLauncher = useDeck((s) => s.setLauncher);
 
-  // Re-render bei State-Änderungen (simple Lösung ohne externe Library)
-  const rerender = useCallback(() => forceUpdate((n) => n + 1), []);
-
-  // Wrap alle State-Methoden mit re-render
-  const wrappedState: GridState = new Proxy(state, {
-    get(target, prop) {
-      const val = (target as any)[prop];
-      if (typeof val === 'function') {
-        return (...args: any[]) => {
-          const result = val.apply(target, args);
-          rerender();
-          return result;
-        };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        setLauncher(!useDeck.getState().launcherOpen);
       }
-      return val;
-    },
-  });
+      if (e.key === 'Escape') setLauncher(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [setLauncher]);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        width: '100vw',
-        overflow: 'hidden',
-        backgroundColor: '#0a0a0a',
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-      }}
-    >
-      <Toolbar state={wrappedState} />
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        <Grid state={wrappedState} />
+    <div className="app">
+      <Sidebar />
+      <div className="main">
+        <Topbar />
+        <div className="content">
+          {view === 'uebersicht' && <TischView />}
+          {view === 'protokolle' && <ProtokolleView />}
+          {view === 'einstellungen' && <EinstellungenView />}
+          {view === 'austausch' && <AustauschView />}
+          {view === 'tasks' && <TasksView />}
+          {view === 'zeitplan' && <ZeitplanView />}
+        </div>
       </div>
+      <Launcher />
     </div>
   );
 }

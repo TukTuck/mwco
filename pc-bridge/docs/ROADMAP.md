@@ -9,7 +9,7 @@ Stand: 22. September 2026
 
 | Stream | Beschreibung | Status | Branch |
 |--------|-------------|--------|--------|
-| **A** | Electron + Grid UI | ✅ Grundgerüst fertig | `arena/01a0c3a9-mwco` |
+| **A** | Electron + **Kartentisch-UI** (ersetzt Grid) | ✅ Neue UI gebaut, testbar | `arena/01a0c3a9-mwco` |
 | **B** | SQLite + MCP-Bus | ✅ Fertig | `arena/01a0c3a9-mwco` |
 | **C** | Paul + Orchestrator | ✅ Grundgerüst fertig | `arena/01a0c3a9-mwco` |
 | **D** | Hub / Worker | ✅ Grundgerüst fertig | `arena/01a0c3a9-mwco` |
