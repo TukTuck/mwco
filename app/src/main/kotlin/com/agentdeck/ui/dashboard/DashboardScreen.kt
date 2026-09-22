@@ -2,8 +2,8 @@
 package com.agentdeck.ui.dashboard
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,18 +13,9 @@ import com.agentdeck.core.domain.*
 import com.agentdeck.core.orchestration.OrchestratorState
 
 /**
- * Main dashboard showing orchestrator status, active tasks, and agents.
+ * Haupt-Dashboard der Agent Deck App.
  *
- * ## Design-Entscheidung:
- * Single-Screen-Overview – User sieht auf einen Blick:
- * - Orchestrator-Status (Idle/Working/Blocked/Completed/Failed)
- * - Aktive Tasks mit Fortschritt
- * - Agenten-Verfügbarkeit
- * - Blockaden (User-Input erforderlich)
- *
- * ## Warum kein Live-Update per WebSocket?
- * Der State kommt über Compose State-Flows vom ViewModel.
- * Das ist ausreichend – Tasks dauern Sekunden bis Minuten, nicht Millisekunden.
+ * Zeigt Status, aktive Tasks, Agenten und Schnellzugriff auf alle Bereiche.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +25,9 @@ fun DashboardScreen(
     onStartBlueprint: () -> Unit,
     onOpenSettings: () -> Unit,
     onViewTasks: () -> Unit,
+    onViewAgents: () -> Unit,
+    onViewResults: () -> Unit,
+    onViewLogs: () -> Unit,
     onUserResponse: (String) -> Unit
 ) {
     Scaffold(
@@ -41,9 +35,7 @@ fun DashboardScreen(
             TopAppBar(
                 title = { Text("Agent Deck") },
                 actions = {
-                    IconButton(onClick = onOpenSettings) {
-                        Text("⚙️")
-                    }
+                    IconButton(onClick = onOpenSettings) { Text("⚙️") }
                 }
             )
         }
@@ -52,32 +44,76 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // ── Status Card ──────────────────
             StatusCard(state)
-            
-            // ── Quick Actions ──────────────────
+
+            // ── Schnellzugriff Grid ──────────────────
+            Text("Schnellzugriff", style = MaterialTheme.typography.titleMedium)
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(
+                QuickActionCard(
+                    icon = "📝",
+                    title = "Blueprint",
+                    subtitle = "Neuen Plan starten",
                     onClick = onStartBlueprint,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text("Blueprint starten")
-                }
-                
-                OutlinedButton(
+                )
+                QuickActionCard(
+                    icon = "📋",
+                    title = "Tasks",
+                    subtitle = "${state.tasks.size} Tasks",
                     onClick = onViewTasks,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text("Tasks (${state.tasks.size})")
-                }
+                )
             }
-            
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                QuickActionCard(
+                    icon = "🤖",
+                    title = "Agenten",
+                    subtitle = "${agents.size} konfiguriert",
+                    onClick = onViewAgents,
+                    modifier = Modifier.weight(1f)
+                )
+                QuickActionCard(
+                    icon = "✅",
+                    title = "Ergebnisse",
+                    subtitle = "${state.tasks.count { it.isCompleted }} fertig",
+                    onClick = onViewResults,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                QuickActionCard(
+                    icon = "📊",
+                    title = "Logs",
+                    subtitle = "System-Protokoll",
+                    onClick = onViewLogs,
+                    modifier = Modifier.weight(1f)
+                )
+                QuickActionCard(
+                    icon = "⚙️",
+                    title = "LLM Settings",
+                    subtitle = "Provider wählen",
+                    onClick = onOpenSettings,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
             // ── Blocked Question ──────────────────
             if (state is OrchestratorState.Blocked) {
                 BlockedQuestionCard(
@@ -86,22 +122,47 @@ fun DashboardScreen(
                     onResponse = onUserResponse
                 )
             }
-            
+
             // ── Active Tasks ──────────────────
             if (state is OrchestratorState.Monitoring && state.activeTasks.isNotEmpty()) {
                 Text("Aktive Tasks", style = MaterialTheme.typography.titleMedium)
-                
                 state.activeTasks.forEach { task ->
                     TaskCard(task)
                 }
             }
-            
+
             // ── Agent Status ──────────────────
             Text("Agenten", style = MaterialTheme.typography.titleMedium)
-            
             agents.forEach { agent ->
                 AgentCard(agent)
             }
+        }
+    }
+}
+
+@Composable
+private fun QuickActionCard(
+    icon: String,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(icon, style = MaterialTheme.typography.headlineMedium)
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -118,7 +179,7 @@ private fun StatusCard(state: OrchestratorState) {
         is OrchestratorState.Completed -> Triple("✅ Fertig", state.summary, MaterialTheme.colorScheme.primaryContainer)
         is OrchestratorState.Failed -> Triple("❌ Fehler", state.error, MaterialTheme.colorScheme.errorContainer)
     }
-    
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = color)
@@ -139,13 +200,8 @@ private fun TaskCard(task: Task) {
                 Spacer(modifier = Modifier.weight(1f))
                 StatusBadge(task.status)
             }
-            
             if (task.error != null) {
-                Text(
-                    "Fehler: ${task.error}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
+                Text("Fehler: ${task.error}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
         }
     }
@@ -166,7 +222,6 @@ private fun AgentCard(agent: Agent) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
             AgentStatusBadge(agent.status)
         }
     }
@@ -177,23 +232,15 @@ private fun StatusBadge(status: TaskStatus) {
     val (text, color) = when (status) {
         TaskStatus.QUEUED -> "Wartend" to MaterialTheme.colorScheme.surfaceVariant
         TaskStatus.DISPATCHING -> "Sendend" to MaterialTheme.colorScheme.secondaryContainer
-        TaskStatus.WORKING -> "Läuft" to MaterialTheme.colorScheme.primaryContainer
+        TaskStatus.WORKING -> "🔄 Läuft" to MaterialTheme.colorScheme.primaryContainer
         TaskStatus.REVIEWING -> "Review" to MaterialTheme.colorScheme.tertiaryContainer
-        TaskStatus.DONE -> "Fertig" to MaterialTheme.colorScheme.primaryContainer
-        TaskStatus.FAILED -> "Fehler" to MaterialTheme.colorScheme.errorContainer
-        TaskStatus.BLOCKED -> "Blockiert" to MaterialTheme.colorScheme.errorContainer
+        TaskStatus.DONE -> "✅ Fertig" to MaterialTheme.colorScheme.primaryContainer
+        TaskStatus.FAILED -> "❌ Fehler" to MaterialTheme.colorScheme.errorContainer
+        TaskStatus.BLOCKED -> "⚠️" to MaterialTheme.colorScheme.errorContainer
         TaskStatus.CANCELLED -> "Abgebrochen" to MaterialTheme.colorScheme.surfaceVariant
     }
-    
-    Surface(
-        shape = MaterialTheme.shapes.small,
-        color = color
-    ) {
-        Text(
-            text,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall
-        )
+    Surface(shape = MaterialTheme.shapes.small, color = color) {
+        Text(text, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -205,16 +252,8 @@ private fun AgentStatusBadge(status: AgentStatus) {
         AgentStatus.RATE_LIMITED -> "Rate Limit" to MaterialTheme.colorScheme.errorContainer
         AgentStatus.ERROR -> "Fehler" to MaterialTheme.colorScheme.errorContainer
     }
-    
-    Surface(
-        shape = MaterialTheme.shapes.small,
-        color = color
-    ) {
-        Text(
-            text,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall
-        )
+    Surface(shape = MaterialTheme.shapes.small, color = color) {
+        Text(text, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -229,27 +268,12 @@ private fun BlockedQuestionCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                "Eingabe benötigt",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-            
+            Text("Eingabe benötigt", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                question,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-            
+            Text(question, style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(12.dp))
-            
             options.forEach { option ->
-                Button(
-                    onClick = { onResponse(option) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Button(onClick = { onResponse(option) }, modifier = Modifier.fillMaxWidth()) {
                     Text(option)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
