@@ -1,38 +1,79 @@
 {
   "name": "agent-deck-pc-bridge",
-  "version": "0.1.0",
-  "description": "PC-Bridge für Agent Deck Mobile – WebSocket-Server der Tasks vom Handy empfängt und lokal ausführt",
+  "version": "0.2.0",
+  "description": "Agent Deck Desktop – Electron App mit MCP-Bus, SQLite, Grid-Layout, Paul + Orchestrator + Hub/Worker",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/electron/main.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx src/index.ts",
+    "build:ui": "vite build",
+    "start": "electron dist/electron/main.js",
+    "dev": "concurrently \"tsx watch src/index.ts\" \"vite\"",
+    "dev:server": "tsx watch src/index.ts",
+    "dev:ui": "vite",
     "watch": "tsx watch src/index.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "electron:dev": "NODE_ENV=development electron dist/electron/main.js",
+    "package": "electron-builder"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.0",
-    "better-sqlite3": "^11.10.0",
+    "ws": "^8.18.0",
+    "better-sqlite3": "^11.7.0",
+    "node-pty": "^1.0.0",
     "chokidar": "^4.0.0",
     "glob": "^11.0.0",
-    "multicast-dns": "^7.2.5",
-    "node-pty": "^1.0.0",
+    "toml": "^3.0.0",
     "pino": "^9.5.0",
     "pino-pretty": "^13.0.0",
-    "toml": "^3.0.0",
     "uuid": "^11.0.0",
-    "ws": "^8.18.0"
+    "multicast-dns": "^7.2.5",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "zustand": "^5.0.0",
+    "lucide-react": "^0.468.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^9.6.0",
+    "@types/ws": "^8.5.13",
     "@types/node": "^22.10.0",
     "@types/uuid": "^10.0.0",
-    "@types/ws": "^8.5.13",
-    "tsx": "^4.19.0",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0"
+    "tsx": "^4.19.0",
+    "vitest": "^2.1.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.0",
+    "vite": "^6.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "concurrently": "^9.1.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
+  },
+  "build": {
+    "appId": "com.agentdeck.desktop",
+    "productName": "Agent Deck",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "files": [
+      "dist/**/*",
+      "dist-ui/**/*",
+      "config/default.json"
+    ]
   },
   "license": "MIT",
   "author": "TukTuck",
