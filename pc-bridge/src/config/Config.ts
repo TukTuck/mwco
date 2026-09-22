@@ -37,9 +37,13 @@ export interface BridgeConfig {
     defaultPath: string;
     autoDetectGit: boolean;
   };
+  database: {
+    path: string;
+    walMode: boolean;
+  };
 }
 
-const CONFIG_DIR = path.resolve(import.meta.dirname, '../../config');
+const CONFIG_DIR = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../config');
 
 /**
  * Lädt die Konfiguration: default.json + local.json (override).
@@ -48,7 +52,7 @@ export function loadConfig(): BridgeConfig {
   const defaultConfig = loadJsonFile(path.join(CONFIG_DIR, 'default.json'));
   const localConfig = loadJsonFile(path.join(CONFIG_DIR, 'local.json'));
 
-  return deepMerge(defaultConfig, localConfig) as BridgeConfig;
+  return deepMerge(defaultConfig, localConfig) as unknown as BridgeConfig;
 }
 
 function loadJsonFile(filePath: string): Record<string, unknown> {

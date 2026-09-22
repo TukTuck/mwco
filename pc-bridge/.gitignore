@@ -4,3 +4,4 @@ dist/
 .env
 config/local.json
 *.tsbuildinfo
+data/

@@ -2,10 +2,13 @@
 /**
  * MessageHandler – verarbeitet authentifizierte WebSocket-Nachrichten.
  *
- * Delegiert an die passenden Bridges:
- * - task_request → TerminalBridge, FileSystemBridge, GitBridge
+ * Delegiert an die passenden Bridges UND den MCP-Bus:
+ * - task_request → TerminalBridge, FileSystemBridge, GitBridge (legacy)
+ * - mcp_call → MCP-Bus (Tool-Aufruf zwischen Knoten)
  * - task_cancel → laufenden Task abbrechen
  * - ping → pong
+ *
+ * Persistiert Tasks und Ergebnisse in der SQLite-Datenbank.
  */
 
 import { WebSocket } from 'ws';
@@ -22,6 +25,8 @@ import { TerminalBridge } from '../bridge/TerminalBridge.js';
 import { FileSystemBridge } from '../bridge/FileSystemBridge.js';
 import { GitBridge } from '../bridge/GitBridge.js';
 import type { BridgeConfig } from '../config/Config.js';
+import type { DatabaseService } from '../database/DatabaseService.js';
+import type { MCPBus } from '../mcp/MCPBus.js';
 import { logger } from '../index.js';
 
 export class MessageHandler {
@@ -30,7 +35,11 @@ export class MessageHandler {
   private git: GitBridge;
   private runningTasks = new Map<string, AbortController>();
 
-  constructor(private config: BridgeConfig) {
+  constructor(
+    private config: BridgeConfig,
+    private db?: DatabaseService,
+    private bus?: MCPBus
+  ) {
     this.terminal = new TerminalBridge(config);
     this.filesystem = new FileSystemBridge(config);
     this.git = new GitBridge(config, this.terminal);
@@ -73,6 +82,33 @@ export class MessageHandler {
 
     logger.info(`Task ${task_id}: ${actions.length} Aktionen`);
 
+    // Task in DB persistieren
+    if (this.db) {
+      try {
+        this.db.tasks.create({
+          id: task_id,
+          sessionId: null,
+          blueprintId: null,
+          title: message.payload.title,
+          description: message.payload.description,
+          agentId: 'pc-bridge',
+          priority: message.payload.priority,
+          status: 'working',
+          dependsOn: [],
+          timeoutSeconds: timeout_seconds,
+          retryCount: 0,
+          maxRetries: 3,
+          resultType: null,
+          resultContent: null,
+          error: null,
+          metadata: { actions: actions.length },
+        });
+        this.db.log('bridge', 'task_started', task_id, `${actions.length} Aktionen`);
+      } catch (err) {
+        logger.warn(`DB-Fehler beim Task-Start: ${(err as Error).message}`);
+      }
+    }
+
     // AbortController für Cancel-Support
     const abortController = new AbortController();
     this.runningTasks.set(task_id, abortController);
@@ -105,6 +141,23 @@ export class MessageHandler {
       }
     } finally {
       this.runningTasks.delete(task_id);
+    }
+
+    // Ergebnis in DB persistieren
+    if (this.db) {
+      try {
+        if (allSuccess) {
+          const summary = `${results.length} Aktionen erfolgreich ausgeführt`;
+          this.db.tasks.setResult(task_id, 'TEXT', summary);
+          this.db.log('bridge', 'task_completed', task_id, summary);
+        } else {
+          const errorMsg = results[results.length - 1]?.error ?? 'Unbekannter Fehler';
+          this.db.tasks.setError(task_id, errorMsg);
+          this.db.log('bridge', 'task_failed', task_id, errorMsg, 'error');
+        }
+      } catch (err) {
+        logger.warn(`DB-Fehler beim Task-Abschluss: ${(err as Error).message}`);
+      }
     }
 
     // Ergebnis senden
@@ -211,6 +264,11 @@ export class MessageHandler {
     if (controller) {
       controller.abort();
       logger.info(`Cancel-Signal für Task ${taskId}`);
+
+      if (this.db) {
+        this.db.tasks.updateStatus(taskId, 'cancelled');
+        this.db.log('bridge', 'task_cancelled', taskId);
+      }
     }
   }
 

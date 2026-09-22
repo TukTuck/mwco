@@ -54,10 +54,8 @@ export class TerminalBridge {
           timeout,
           maxBuffer: this.config.security.maxOutputSize,
           env,
-          // Windows: cmd.exe, Unix: /bin/sh
-          shell: true,
         },
-        (error, stdout, stderr) => {
+        (error: any, stdout: string, stderr: string) => {
           const truncatedStdout = this.truncate(stdout);
           const truncatedStderr = this.truncate(stderr);
 

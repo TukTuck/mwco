@@ -15,9 +15,12 @@
  */
 
 import { WebSocketServer, WebSocket } from 'ws';
+import os from 'node:os';
 import type { BridgeConfig } from '../config/Config.js';
 import type { BridgeMessage, AuthMessage } from './Protocol.js';
 import { MessageHandler } from './MessageHandler.js';
+import type { DatabaseService } from '../database/DatabaseService.js';
+import type { MCPBus } from '../mcp/MCPBus.js';
 import { logger } from '../index.js';
 
 export class BridgeServer {
@@ -25,8 +28,12 @@ export class BridgeServer {
   private handler: MessageHandler;
   private connections = new Set<WebSocket>();
 
-  constructor(private config: BridgeConfig) {
-    this.handler = new MessageHandler(config);
+  constructor(
+    private config: BridgeConfig,
+    private db?: DatabaseService,
+    private bus?: MCPBus
+  ) {
+    this.handler = new MessageHandler(config, db, bus);
   }
 
   async start(): Promise<void> {
@@ -131,14 +138,27 @@ export class BridgeServer {
   }
 
   private sendAuthOk(ws: WebSocket): void {
+    const capabilities: import('./Protocol.js').BridgeCapability[] = ['terminal', 'filesystem', 'git', 'code_exec', 'ask_user'];
+
+    // MCP-Bus-Tools als zusätzliche Capabilities melden
+    if (this.bus) {
+      const allTools = this.bus.getAllTools();
+      for (const { tool } of allTools) {
+        const cap = `mcp:${tool.name}` as any;
+        if (!capabilities.includes(cap)) {
+          capabilities.push(cap);
+        }
+      }
+    }
+
     this.send(ws, {
       type: 'auth_ok',
       task_id: '',
       payload: {
-        bridge_version: '0.1.0',
+        bridge_version: '0.2.0',
         platform: process.platform,
-        hostname: require('os').hostname(),
-        capabilities: ['terminal', 'filesystem', 'git', 'code_exec'],
+        hostname: os.hostname(),
+        capabilities,
       },
     });
   }
