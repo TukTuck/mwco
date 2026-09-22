@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.llm.remote
 
 import com.agentdeck.llm.api.*

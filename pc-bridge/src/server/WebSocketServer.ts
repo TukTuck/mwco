@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * WebSocket-Server – Kern der PC-Bridge.
  *

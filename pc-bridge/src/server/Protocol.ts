@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * Agent Deck PC-Bridge – WebSocket-Protokoll Typdefinitionen.
  *

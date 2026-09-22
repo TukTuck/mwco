@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.ui.navigation
 
 import androidx.compose.runtime.Composable

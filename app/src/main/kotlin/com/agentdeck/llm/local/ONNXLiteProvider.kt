@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.llm.local
 
 import android.content.Context

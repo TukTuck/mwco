@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.ui.blueprint
 
 import androidx.compose.foundation.layout.*

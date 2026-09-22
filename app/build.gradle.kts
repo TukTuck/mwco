@@ -6,6 +6,9 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 TukTuck
+
 android {
     namespace = "com.agentdeck"
     compileSdk = 34

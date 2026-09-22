@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * Git-Bridge – Git-Operationen auf dem PC.
  *

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.core.domain
 
 import kotlinx.serialization.Serializable

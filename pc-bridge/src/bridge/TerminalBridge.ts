@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * Terminal-Bridge – führt Shell-Befehle auf dem PC aus.
  *

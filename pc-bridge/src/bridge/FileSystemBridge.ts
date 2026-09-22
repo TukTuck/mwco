@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * Filesystem-Bridge – Datei-Operationen auf dem PC.
  *

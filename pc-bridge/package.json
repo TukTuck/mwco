@@ -30,6 +30,13 @@
     "tsx": "^4.19.0",
     "vitest": "^2.1.0"
   },
+  "license": "MIT",
+  "author": "TukTuck",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TukTuck/mwco.git",
+    "directory": "pc-bridge"
+  },
   "engines": {
     "node": ">=20.0.0"
   }

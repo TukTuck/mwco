@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.data.repository
 
 import com.agentdeck.core.domain.Blueprint

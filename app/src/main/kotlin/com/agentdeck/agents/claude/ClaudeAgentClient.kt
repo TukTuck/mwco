@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.agents.claude
 
 import com.agentdeck.agents.api.*

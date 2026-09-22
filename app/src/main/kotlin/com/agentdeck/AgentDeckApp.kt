@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck
 
 import android.app.Application

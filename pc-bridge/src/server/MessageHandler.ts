@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * MessageHandler – verarbeitet authentifizierte WebSocket-Nachrichten.
  *

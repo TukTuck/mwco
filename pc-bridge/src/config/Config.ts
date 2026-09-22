@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * Configuration für die PC-Bridge.
  *

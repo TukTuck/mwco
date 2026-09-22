@@ -201,4 +201,7 @@ wget -O app/src/main/assets/models/qwen2.5-1.5b-q4.gguf \
 
 ## License
 
-Siehe LICENSE
+[MIT License](LICENSE) – Copyright (c) 2026 TukTuck
+
+Frei nutzbar, veränderbar und verbreitbar – auch kommerziell.
+Einzige Bedingung: Copyright-Hinweis muss erhalten bleiben.

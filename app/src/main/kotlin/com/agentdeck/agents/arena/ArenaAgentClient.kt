@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.agents.arena
 
 import com.agentdeck.agents.api.*

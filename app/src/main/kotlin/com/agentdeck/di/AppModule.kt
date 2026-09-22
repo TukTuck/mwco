@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.di
 
 import com.agentdeck.agents.AgentClientFactory

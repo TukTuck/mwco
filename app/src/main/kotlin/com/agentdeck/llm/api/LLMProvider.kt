@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.llm.api
 
 import kotlinx.coroutines.flow.Flow

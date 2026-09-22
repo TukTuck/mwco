@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 package com.agentdeck.agents.chatgpt
 
 import com.agentdeck.agents.api.*
