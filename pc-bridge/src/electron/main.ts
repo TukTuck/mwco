@@ -29,7 +29,7 @@ import { HubService } from '../hub/HubService.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null = null;
-let db: DatabaseService;
+let db: DatabaseService | undefined;
 let bus: MCPBus;
 let paul: PaulEngine;
 let orchestrator: OrchestratorEngine;
@@ -197,9 +197,10 @@ function setupIPC(): void {
     mainWindow?.webContents.send('hub:taskDone', task);
   });
 
-  // ── Database – Layouts ──────────────────────────
-  ipcMain.handle('db:layouts:list', () => db.layouts.list());
+  // ── Database – Layouts (optional, returns [] if DB unavailable) ──────────────────
+  ipcMain.handle('db:layouts:list', () => db?.layouts.list() ?? []);
   ipcMain.handle('db:layouts:save', (_event: unknown, layout: { name: string; config: Record<string, unknown> }) => {
+    if (!db) return [];
     const existing = db.layouts.getByName(layout.name);
     if (existing) {
       db.layouts.update(existing.id, layout.name, layout.config);
@@ -215,23 +216,25 @@ function setupIPC(): void {
     return db.layouts.list();
   });
   ipcMain.handle('db:layouts:delete', (_event: unknown, id: string) => {
+    if (!db) return [];
     db.layouts.delete(id);
     return db.layouts.list();
   });
 
   // ── Database – Sessions ──────────────────────────
-  ipcMain.handle('db:sessions:list', () => db.sessions.list());
-  ipcMain.handle('db:sessions:messages', (_event: unknown, sessionId: string) => db.messages.getBySession(sessionId));
+  ipcMain.handle('db:sessions:list', () => db?.sessions.list() ?? []);
+  ipcMain.handle('db:sessions:messages', (_event: unknown, sessionId: string) => db?.messages.getBySession(sessionId) ?? []);
 
   // ── Database – Tasks ──────────────────────────
   ipcMain.handle('db:tasks:list', (_event: unknown, status?: string) => {
+    if (!db) return [];
     if (status) return db.tasks.listByStatus(status as any);
     return db.tasks.listByStatus('working');
   });
 
   // ── Database – Audit ──────────────────────────
-  ipcMain.handle('db:audit:query', (_event: unknown, filter: unknown) => db.audit.query(filter as any));
-  ipcMain.handle('db:audit:export', () => db.audit.exportAll());
+  ipcMain.handle('db:audit:query', (_event: unknown, filter: unknown) => db?.audit.query(filter as any) ?? []);
+  ipcMain.handle('db:audit:export', () => db?.audit.exportAll() ?? []);
 }
 
 // ── App Lifecycle ──────────────────────────────────
@@ -239,9 +242,14 @@ function setupIPC(): void {
 app.whenReady().then(async () => {
   const config = loadConfig();
 
-  // 1. Datenbank starten
-  db = new DatabaseService(config);
-  db.log('system', 'electron_start', undefined, 'Electron App gestartet');
+  // 1. Datenbank starten (optional)
+  try {
+    db = new DatabaseService(config);
+    db.log('system', 'electron_start', undefined, 'Electron App gestartet');
+  } catch (err) {
+    console.warn(`SQLite nicht verfügbar: ${(err as Error).message}`);
+    db = undefined as any;
+  }
 
   // 2. Bridges + MCP-Bus starten
   const terminal = new TerminalBridge(config);
@@ -284,14 +292,14 @@ app.whenReady().then(async () => {
     }
   });
 
-  db.log('system', 'ready', undefined, 'Alle Services gestartet');
+  db?.log('system', 'ready', undefined, 'Alle Services gestartet');
 });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    db.log('system', 'electron_stop', undefined, 'App geschlossen');
+    db?.log('system', 'electron_stop', undefined, 'App geschlossen');
     hub.stop();
-    db.close();
+    db?.close();
     app.quit();
   }
 });

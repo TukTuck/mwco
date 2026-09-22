@@ -78,10 +78,16 @@ async function main(): Promise<void> {
     logger.warn('   Token setzen in config/local.json: { "security": { "authToken": "dein-geheimnis" } }');
   }
 
-  // 2. Datenbank starten
-  const db = new DatabaseService(config);
-  db.log('system', 'startup', undefined, 'PC-Bridge gestartet');
-  logger.info('✅ SQLite-Datenbank bereit');
+  // 2. Datenbank starten (optional – funktioniert nur mit nativen better-sqlite3 Bindings)
+  let db: DatabaseService | undefined;
+  try {
+    db = new DatabaseService(config);
+    db.log('system', 'startup', undefined, 'PC-Bridge gestartet');
+    logger.info('✅ SQLite-Datenbank bereit');
+  } catch (err) {
+    logger.warn(`⚠️  SQLite nicht verfügbar: ${(err as Error).message}`);
+    logger.warn('   Server läuft ohne Persistenz. Für vollen Funktionsumfang: npm install --build-from-source');
+  }
 
   // 3. Bridges initialisieren
   const terminal = new TerminalBridge(config);
@@ -106,7 +112,7 @@ async function main(): Promise<void> {
   }
 
   logger.info(`✅ MCP-Bus bereit (${paulNode.tools.size} Tools auf Pauls Knoten)`);
-  db.log('system', 'mcp_bus_ready', undefined, `${paulNode.tools.size} Tools registriert`);
+  db?.log('system', 'mcp_bus_ready', undefined, `${paulNode.tools.size} Tools registriert`);
 
   // 5. WebSocket-Server starten (mit DB + Bus)
   const server = new BridgeServer(config, db, bus);
@@ -115,9 +121,9 @@ async function main(): Promise<void> {
   // Graceful Shutdown
   const shutdown = async (signal: string) => {
     logger.info(`Empfangen: ${signal} – fahre herunter...`);
-    db.log('system', 'shutdown', undefined, `Signal: ${signal}`);
+    db?.log('system', 'shutdown', undefined, `Signal: ${signal}`);
     await server.stop();
-    db.close();
+    db?.close();
     process.exit(0);
   };
 
