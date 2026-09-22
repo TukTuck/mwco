@@ -17,6 +17,7 @@ import {
   GRID_COLS,
   GRID_ROWS,
 } from '../store/gridStore';
+import { PaulPanel } from './PaulPanel';
 
 interface GridCellProps {
   cell: GridCell;
@@ -168,48 +169,7 @@ function CellContent({ cell }: { cell: GridCell }) {
 }
 
 function PaulContent() {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ flex: 1, overflow: 'auto', fontSize: '13px', color: '#ccc' }}>
-        <div style={{ padding: '8px', backgroundColor: '#1a1a1a', borderRadius: '6px', marginBottom: '8px' }}>
-          <span style={{ color: '#3b82f6', fontWeight: 600 }}>Paul:</span> Hallo! Ich bin dein Allrounder.
-          Ich kann Dateien lesen, schreiben, Terminal-Befehle ausführen und Git-Operationen durchführen.
-          Wie kann ich helfen?
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-        <input
-          type="text"
-          placeholder="Nachricht an Paul..."
-          style={{
-            flex: 1,
-            padding: '8px 12px',
-            borderRadius: '6px',
-            border: '1px solid #333',
-            backgroundColor: '#1a1a1a',
-            color: '#e0e0e0',
-            fontSize: '13px',
-            outline: 'none',
-            fontFamily: 'Inter, system-ui, sans-serif',
-          }}
-        />
-        <button
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: 'none',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            fontSize: '13px',
-            cursor: 'pointer',
-            fontWeight: 600,
-          }}
-        >
-          Senden
-        </button>
-      </div>
-    </div>
-  );
+  return <PaulPanel />;
 }
 
 function OrchestratorContent() {
