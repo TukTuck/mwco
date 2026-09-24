@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 package com.agentdeck.core.orchestration
 
+import com.agentdeck.core.common.RateLimiter
 import com.agentdeck.core.domain.*
 import com.agentdeck.llm.api.CompletionOptions
 import com.agentdeck.llm.api.LLMProvider
@@ -37,12 +38,17 @@ class Orchestrator(
     /** LLM für Task-Decomposition. Null = rein regelbasiert (Fallback). */
     private val llmProvider: LLMProvider?,
     /** Map von Agent-ID zu Agent-Client. Leer = keine Agenten konfiguriert. */
-    private val agentClients: Map<String, com.agentdeck.agents.api.AgentClient> = emptyMap()
+    private val agentClients: Map<String, com.agentdeck.agents.api.AgentClient> = emptyMap(),
+    /** RateLimiter pro Agent — wird lazy angelegt. */
+    private val rateLimiters: MutableMap<String, RateLimiter> = mutableMapOf()
 ) {
     private val json = Json { 
         ignoreUnknownKeys = true
         isLenient = true
     }
+
+    private fun limiterFor(agentId: String): RateLimiter =
+        rateLimiters.getOrPut(agentId) { RateLimiter() }
     
     private val _state = MutableStateFlow<OrchestratorState>(OrchestratorState.Idle)
     val state: StateFlow<OrchestratorState> = _state.asStateFlow()
@@ -306,9 +312,19 @@ class Orchestrator(
             onTaskFailed(task.id, "Agent ${task.agentId} nicht verfügbar")
             return
         }
+
+        // Rate-Limit prüfen — vorher blocken statt API-Ban riskieren
+        val limiter = limiterFor(task.agentId)
+        if (!limiter.canMakeRequest()) {
+            val waitMs = limiter.getWaitTime()
+            Timber.w("Rate limit for ${task.agentId}, warte ${waitMs}ms vor Retry für Task ${task.id}")
+            onTaskFailed(task.id, "Rate limit für ${task.agentId}: warte ${waitMs / 1000}s")
+            return
+        }
         
         try {
             Timber.d("Dispatching task ${task.id} to ${task.agentId}")
+            limiter.recordRequest()
             
             val result = agentClient.executeTask(task)
             

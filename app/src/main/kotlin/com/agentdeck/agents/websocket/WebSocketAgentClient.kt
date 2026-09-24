@@ -13,21 +13,20 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import timber.log.Timber
-import java.util.UUID
 
 /**
  * Generic WebSocket agent client.
  * Connects to a remote agent via WebSocket protocol (e.g., PC Bridge).
  *
- * Protocol:
- * - Send: JSON task request
- * - Receive: JSON progress updates + final result
+ * Protocol (siehe pc-bridge/src/server/Protocol.ts):
+ * - Send: JSON task request mit actions
+ * - Receive: JSON progress updates + final result (result_type)
  *
  * Message format:
  * {
- *   "type": "task_request" | "progress" | "result" | "error",
+ *   "type": "auth" | "task_request" | "task_cancel" | "progress" | "result" | "error",
  *   "task_id": "...",
  *   "payload": { ... }
  * }
@@ -70,28 +69,38 @@ class WebSocketAgentClient(
                 session = this
                 _isConnected = true
 
-                // Authenticate if needed
-                config.authToken?.let { token ->
-                    send(json.encodeToString(WebSocketMessage(
-                        type = "auth",
-                        taskId = "",
-                        payload = mapOf("token" to token)
-                    )))
-                }
+                // Auth MUSS immer als erste Nachricht kommen (PC-Bridge verlangt das, auch wenn requireAuth=false)
+                val authToken = config.authToken ?: ""
+                send(json.encodeToString(WebSocketMessage(
+                    type = "auth",
+                    taskId = "",
+                    payload = buildJsonObject { put("token", authToken) }
+                )))
+                Timber.d("Sent auth (token length ${authToken.length})")
 
-                // Send task request
+                // Task-Request mit actions — PC-Bridge erwartet actions Array
+                val actions = buildJsonArray {
+                    add(buildJsonObject {
+                        put("type", "terminal")
+                        // Nutze description als Befehl, fallback auf Titel
+                        val cmd = task.description.ifBlank { task.title }.take(2000).replace("\"", "'")
+                        put("command", cmd)
+                    })
+                }
+                val requestPayload = buildJsonObject {
+                    put("title", task.title)
+                    put("description", task.description)
+                    put("priority", task.priority.name)
+                    put("timeout_seconds", task.timeoutSeconds)
+                    put("actions", actions)
+                }
                 val request = WebSocketMessage(
                     type = "task_request",
                     taskId = task.id,
-                    payload = mapOf(
-                        "title" to task.title,
-                        "description" to task.description,
-                        "priority" to task.priority.name,
-                        "timeout_seconds" to task.timeoutSeconds.toString()
-                    )
+                    payload = requestPayload
                 )
                 send(json.encodeToString(request))
-                Timber.d("Sent task ${task.id} via WebSocket")
+                Timber.d("Sent task ${task.id} via WebSocket with 1 action")
 
                 // Wait for result
                 try {
@@ -104,28 +113,31 @@ class WebSocketAgentClient(
 
                                     when (message.type) {
                                         "progress" -> {
-                                            Timber.d("Progress for ${task.id}: ${message.payload["message"]}")
+                                            val msg = message.payload["message"]?.jsonPrimitive?.contentOrNull ?: "working"
+                                            Timber.d("Progress for ${task.id}: $msg")
                                         }
                                         "result" -> {
-                                            val content = message.payload["content"] ?: ""
-                                            val resultType = message.payload["type"] ?: "TEXT"
                                             resultChannel.send(message)
                                             break
                                         }
                                         "error" -> {
-                                            val error = message.payload["error"] ?: "Unknown error"
                                             resultChannel.send(message)
                                             break
                                         }
                                         "auth_ok" -> {
                                             Timber.d("WebSocket authenticated")
                                         }
+                                        "auth_failed" -> {
+                                            Timber.w("WebSocket auth failed")
+                                            resultChannel.send(message)
+                                            break
+                                        }
                                         else -> {
                                             Timber.w("Unknown WebSocket message type: ${message.type}")
                                         }
                                     }
                                 } catch (e: Exception) {
-                                    Timber.w(e, "Failed to parse WebSocket message")
+                                    Timber.w(e, "Failed to parse WebSocket message: $text")
                                 }
                             }
                         }
@@ -139,20 +151,27 @@ class WebSocketAgentClient(
             val resultMessage = resultChannel.tryReceive().getOrNull()
 
             if (resultMessage?.type == "result") {
+                // PC sendet result_type und content, nicht type
+                val payload = resultMessage.payload
+                val content = payload["content"]?.jsonPrimitive?.contentOrNull ?: ""
+                val resultTypeStr = payload["result_type"]?.jsonPrimitive?.contentOrNull
+                    ?: payload["type"]?.jsonPrimitive?.contentOrNull // Fallback für alte Server
+                    ?: "TEXT"
                 Result.success(
                     TaskResult(
-                        content = resultMessage.payload["content"] ?: "",
-                        type = when (resultMessage.payload["type"]) {
+                        content = content,
+                        type = when (resultTypeStr.uppercase()) {
                             "CODE" -> ResultType.CODE
                             "JSON" -> ResultType.JSON
                             "FILE" -> ResultType.FILE
                             else -> ResultType.TEXT
                         },
-                        metadata = mapOf("source" to "websocket")
+                        metadata = mapOf("source" to "websocket", "task_id" to resultMessage.taskId)
                     )
                 )
-            } else if (resultMessage?.type == "error") {
-                Result.failure(Exception(resultMessage.payload["error"] ?: "WebSocket error"))
+            } else if (resultMessage?.type == "error" || resultMessage?.type == "auth_failed") {
+                val error = resultMessage.payload["error"]?.jsonPrimitive?.contentOrNull ?: "WebSocket error"
+                Result.failure(Exception(error))
             } else {
                 Result.failure(Exception("No result received from WebSocket agent"))
             }
@@ -169,10 +188,11 @@ class WebSocketAgentClient(
 
     override suspend fun cancelTask(taskId: String): Result<Unit> {
         return try {
+            // PC-Bridge erwartet task_cancel, nicht cancel
             session?.send(json.encodeToString(WebSocketMessage(
-                type = "cancel",
+                type = "task_cancel",
                 taskId = taskId,
-                payload = emptyMap()
+                payload = buildJsonObject {}
             )))
             Result.success(Unit)
         } catch (e: Exception) {
@@ -183,10 +203,28 @@ class WebSocketAgentClient(
     override suspend fun checkAvailability(): AgentStatus {
         return try {
             client.webSocket(config.url) {
-                _isConnected = true
+                // Auch beim Check muss auth als erste Nachricht
+                val token = config.authToken ?: ""
+                send(json.encodeToString(WebSocketMessage(
+                    type = "auth",
+                    taskId = "",
+                    payload = buildJsonObject { put("token", token) }
+                )))
+                // Warte kurz auf auth_ok
+                withTimeout(5000) {
+                    for (frame in incoming) {
+                        if (frame is Frame.Text) {
+                            val msg = json.decodeFromString<WebSocketMessage>(frame.readText())
+                            if (msg.type == "auth_ok") {
+                                _isConnected = true
+                                break
+                            }
+                        }
+                    }
+                }
                 close()
             }
-            AgentStatus.ONLINE
+            if (_isConnected) AgentStatus.ONLINE else AgentStatus.OFFLINE
         } catch (e: Exception) {
             _isConnected = false
             AgentStatus.OFFLINE
@@ -218,5 +256,5 @@ private data class WebSocketMessage(
     val type: String,
     @kotlinx.serialization.SerialName("task_id")
     val taskId: String,
-    val payload: Map<String, String> = emptyMap()
+    val payload: JsonObject = JsonObject(emptyMap())
 )

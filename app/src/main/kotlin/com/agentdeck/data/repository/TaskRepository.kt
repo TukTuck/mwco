@@ -30,26 +30,30 @@ class TaskRepository(
         return dao.getById(id)?.toDomain()
     }
     
-    suspend fun saveAll(tasks: List<Task>) {
-        dao.insertAll(tasks.map { it.toEntity() })
+    suspend fun saveAll(tasks: List<Task>, blueprintId: String = "default") {
+        dao.insertAll(tasks.map { it.toEntity(blueprintId) })
     }
+
+    // Rückwärtskompatibel: alter Aufruf ohne blueprintId
+    @Deprecated("Use saveAll(tasks, blueprintId) instead", ReplaceWith("saveAll(tasks, blueprintId)"))
+    suspend fun saveAllWithDefault(tasks: List<Task>) = saveAll(tasks, "default")
     
-    suspend fun update(task: Task) {
-        dao.update(task.toEntity())
+    suspend fun update(task: Task, blueprintId: String = "default") {
+        dao.update(task.toEntity(blueprintId))
     }
     
     suspend fun updateStatus(taskId: String, status: TaskStatus) {
         dao.updateStatus(taskId, status.name)
     }
     
-    suspend fun delete(task: Task) {
-        dao.delete(task.toEntity())
+    suspend fun delete(task: Task, blueprintId: String = "default") {
+        dao.delete(task.toEntity(blueprintId))
     }
     
-    private fun Task.toEntity(): TaskEntity {
+    private fun Task.toEntity(blueprintId: String = "default"): TaskEntity {
         return TaskEntity(
             id = id,
-            blueprintId = "default",  // TODO: Pass blueprintId
+            blueprintId = blueprintId,
             title = title,
             description = description,
             agentId = agentId,

@@ -33,9 +33,11 @@ class BlueprintRepository(
     }
     
     private fun Blueprint.toEntity(): BlueprintEntity {
+        // projectId aus metadata falls vorhanden, sonst "default" — MVP hat kein echtes Projekt-Konzept
+        val effectiveProjectId = metadata["projectId"] ?: "default"
         return BlueprintEntity(
             id = id,
-            projectId = id,
+            projectId = effectiveProjectId,
             project = project,
             goal = goal,
             nonGoal = nonGoal,

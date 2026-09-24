@@ -39,12 +39,14 @@ class AgentRepository(
     }
     
     private fun Agent.toEntity(): AgentEntity {
+        // Polymorph korrekt als AgentConfig encoden — nicht doppelt encoden
+        val configJsonString = json.encodeToString<AgentConfig>(config)
         return AgentEntity(
             id = id,
             name = name,
             capabilities = json.encodeToString(capabilities),
             bestFor = json.encodeToString(bestFor),
-            configJson = json.encodeToString(config.toJsonString()),
+            configJson = configJsonString,
             status = status.name,
             isEnabled = true,
             createdAt = System.currentTimeMillis(),
@@ -59,17 +61,15 @@ class AgentRepository(
             capabilities = try { json.decodeFromString(capabilities) } catch (e: Exception) { emptyList() },
             bestFor = try { json.decodeFromString(bestFor) } catch (e: Exception) { emptyList() },
             status = try { AgentStatus.valueOf(status) } catch (e: Exception) { AgentStatus.OFFLINE },
-            config = AgentConfig.Custom(endpoint = "https://api.example.com")  // TODO: Parse configJson
+            config = try { json.decodeFromString<AgentConfig>(configJson) } catch (e: Exception) {
+                // Fallback falls alte Daten (doppelt encodiert) vorliegen
+                try {
+                    val inner = json.decodeFromString<String>(configJson)
+                    json.decodeFromString<AgentConfig>(inner)
+                } catch (_: Exception) {
+                    AgentConfig.Custom(endpoint = "https://api.example.com")
+                }
+            }
         )
-    }
-    
-    private fun AgentConfig.toJsonString(): String {
-        return when (this) {
-            is AgentConfig.Arena -> json.encodeToString(this)
-            is AgentConfig.Claude -> json.encodeToString(this)
-            is AgentConfig.ChatGPT -> json.encodeToString(this)
-            is AgentConfig.WebSocket -> json.encodeToString(this)
-            is AgentConfig.Custom -> json.encodeToString(this)
-        }
     }
 }

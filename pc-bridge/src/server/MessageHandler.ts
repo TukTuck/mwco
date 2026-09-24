@@ -78,9 +78,22 @@ export class MessageHandler {
    */
   private async handleTaskRequest(ws: WebSocket, message: TaskRequestMessage): Promise<void> {
     const { task_id } = message;
-    const { actions, timeout_seconds } = message.payload;
+    // Robust: falls Client keine actions schickt (alte Android-Version), erzeuge Default-Action aus Beschreibung
+    let actions: BridgeAction[] = message.payload.actions;
+    if (!actions || !Array.isArray(actions) || actions.length === 0) {
+      logger.warn(`Task ${task_id}: keine actions im Payload, erzeuge Fallback aus Beschreibung`);
+      const fallbackCmd = message.payload.description || message.payload.title || 'echo "no-op"';
+      actions = [{ type: 'terminal', command: String(fallbackCmd).slice(0, 2000) } as BridgeAction];
+    }
+    // timeout_seconds kann als String kommen (alte Clients) — tolerant parsen
+    let timeout_seconds: number = (message.payload as unknown as { timeout_seconds: unknown }).timeout_seconds as number;
+    if (typeof timeout_seconds === 'string') {
+      const parsed = parseInt(timeout_seconds as string, 10);
+      timeout_seconds = isNaN(parsed) ? 300 : parsed;
+    }
+    if (typeof timeout_seconds !== 'number' || isNaN(timeout_seconds)) timeout_seconds = 300;
 
-    logger.info(`Task ${task_id}: ${actions.length} Aktionen`);
+    logger.info(`Task ${task_id}: ${actions.length} Aktionen, timeout ${timeout_seconds}s`);
 
     // Task in DB persistieren
     if (this.db) {
