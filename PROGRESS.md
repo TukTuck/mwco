@@ -169,3 +169,14 @@ Auf Wunsch nur P0 umgesetzt (Repository-Bugs, Protokoll Handy↔PC, RateLimiter,
 **⏰ Reminder:** Jemand soll mich an P1 erinnern — P1 nicht vergessen, nur vertagt. Wiedervorlage bei nächstem Sprint/Review.
 
 **Commit:** `7e66445 fix(P0/P1): Repository-Bugs + Protokoll + RateLimiter + Icons` (P1-Code bereits gepusht, aber aus offener Liste entfernt — gilt als erledigt/vertagt)
+
+**Demo-Daten entfernt — 2026-09-24 (58efcfa):**
+Auf Wunsch „Demo Daten weg“ wurden alle statischen Fake-Daten entfernt:
+- `pc-bridge/src/ui/data.ts`: `LOGS`/`INSTANCES`/`KONTAKTE`/`ROUTES`/`TASKS`/`ZEITPLAN`/`SUGGESTIONS` → `[]`
+- `pc-bridge/src/ui/bridge.ts`: Fallbacks jetzt `[]` statt Demo-Arrays, Header-Kommentar auf „kein Demo-Fallback“ geändert
+- `pc-bridge/src/ui/views/*` + `components/tisch/CardBody.tsx`: Zeigen jetzt „Keine Daten — Backend nicht verbunden“ statt Fake-Rows
+- `app/.../AgentDeckNavHost.kt`: `defaultAgents` + `demoLogs` → `emptyList()` (leer bis echte Registry/Logs)
+
+**Beweis:** `grep -r "185.220.101.7\|45.148.10.99" pc-bridge/` liefert keinen Treffer mehr; `cat pc-bridge/src/ui/data.ts` zeigt leere Arrays; `git diff --stat` siehe Commit `58efcfa`.
+
+**Commit:** `58efcfa chore: Demo-Daten entfernt`
