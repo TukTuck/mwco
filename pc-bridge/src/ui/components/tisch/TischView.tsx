@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 /**
- * Kartentisch: zoom-/pannbare Fläche, Karten (3 Stufen), Fenster, Verbindungslinien.
+ * Kartentisch: zoom-/pannbare Fläche, Karten (3 Stufen), Fenster,
+ * Verbindungslinien (selbst setz- & benennbar) + Verbindungs-Editor.
  */
 import { useEffect, useRef } from 'react';
 import type { CSSProperties, PointerEvent as RPointerEvent } from 'react';
 import { useDeck, type CardState, type WinState } from '../../store/deck';
-import { CARD_META, INITIAL_WIRES } from '../../data';
+import { CARD_META } from '../../data';
 import { CardRows, CardFull } from './CardBody';
+import { ConnDialog, VerbindungenPanel } from './Connect';
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
@@ -15,13 +17,13 @@ export function TischView() {
   const wireRefs = useRef<Array<SVGPathElement | null>>([]);
   const cards = useDeck((s) => s.cards);
   const wins = useDeck((s) => s.wins);
+  const conns = useDeck((s) => s.conns);
   const zoom = useDeck((s) => s.zoom);
   const activeWire = useDeck((s) => s.activeWire);
   const setZoom = useDeck((s) => s.setZoom);
   const setActiveWire = useDeck((s) => s.setActiveWire);
   const panRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
 
-  // Zoom zum Cursor (wheel, non-passive)
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
@@ -42,7 +44,7 @@ export function TischView() {
   useEffect(() => {
     const root = canvasRef.current;
     if (!root) return;
-    INITIAL_WIRES.forEach((w, i) => {
+    conns.forEach((w, i) => {
       const p = wireRefs.current[i];
       const a = root.querySelector<HTMLElement>(`.tile[data-key="${w.from}"]`);
       const b = root.querySelector<HTMLElement>(`.tile[data-key="${w.to}"]`);
@@ -65,8 +67,9 @@ export function TischView() {
   useEffect(() => {
     const t = setInterval(() => {
       const root = canvasRef.current;
-      if (!root) return;
-      const vis = INITIAL_WIRES
+      const cs = useDeck.getState().conns;
+      if (!root || !cs.length) return;
+      const vis = cs
         .map((w, i) => ({ i, ok: !!root.querySelector(`.tile[data-key="${w.from}"]`) && !!root.querySelector(`.tile[data-key="${w.to}"]`) }))
         .filter((v) => v.ok);
       if (!vis.length) return;
@@ -80,7 +83,7 @@ export function TischView() {
   const onPanDown = (e: RPointerEvent<HTMLDivElement>) => {
     if (e.target !== canvasRef.current) return;
     panRef.current = { sx: e.clientX, sy: e.clientY, ox: zoom.x, oy: zoom.y };
-    (e.currentTarget as HTMLDivElement).classList.add('panning');
+    e.currentTarget.classList.add('panning');
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const onPanMove = (e: RPointerEvent<HTMLDivElement>) => {
@@ -107,9 +110,9 @@ export function TischView() {
     >
       <div className="world" style={{ transform: `translate(${zoom.x}px,${zoom.y}px) scale(${zoom.s})` }}>
         <svg className="wires" width={5000} height={5000}>
-          {INITIAL_WIRES.map((w, i) => (
+          {conns.map((w, i) => (
             <path
-              key={i}
+              key={w.id}
               ref={(el) => { wireRefs.current[i] = el; }}
               className={activeWire === i ? 'flow' : ''}
               style={{ '--wc': w.color } as CSSProperties}
@@ -119,6 +122,8 @@ export function TischView() {
         {cards.map((c) => <Tile key={c.key} card={c} />)}
       </div>
       {wins.map((w) => <Win key={w.id} win={w} />)}
+      <ConnDialog />
+      <VerbindungenPanel />
     </div>
   );
 }
@@ -128,15 +133,17 @@ function Tile({ card }: { card: CardState }) {
   const moveCard = useDeck((s) => s.moveCard);
   const toggleOpen = useDeck((s) => s.toggleOpen);
   const toWindow = useDeck((s) => s.toWindow);
+  const connectMode = useDeck((s) => s.connectMode);
+  const pendingFrom = useDeck((s) => s.pendingFrom);
+  const clickConnect = useDeck((s) => s.clickConnect);
   const drag = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
 
   const onDown = (e: RPointerEvent<HTMLDivElement>) => {
+    if (connectMode) return; // im Connect-Modus nicht ziehen
     e.stopPropagation();
-    const z = useDeck.getState().zoom.s;
     drag.current = { sx: e.clientX, sy: e.clientY, ox: card.x, oy: card.y, moved: false };
     e.currentTarget.classList.add('dragging');
     e.currentTarget.setPointerCapture(e.pointerId);
-    void z;
     e.preventDefault();
   };
   const onMove = (e: RPointerEvent<HTMLDivElement>) => {
@@ -160,15 +167,21 @@ function Tile({ card }: { card: CardState }) {
     }
   };
 
+  const cls = ['tile'];
+  if (card.open) cls.push('open');
+  if (connectMode) cls.push('connect');
+  if (connectMode && pendingFrom === card.key) cls.push('src');
+
   return (
     <div
-      className={`tile${card.open ? ' open' : ''}`}
+      className={cls.join(' ')}
       data-key={card.key}
       style={{ left: card.x, top: card.y, '--c': meta.color } as CSSProperties}
       onPointerDown={onDown}
       onPointerMove={onMove}
       onPointerUp={onUp}
-      onDoubleClick={() => toggleOpen(card.key)}
+      onDoubleClick={() => { if (!connectMode) toggleOpen(card.key); }}
+      onClick={() => { if (connectMode) clickConnect(card.key); }}
     >
       {card.open ? (
         <>
@@ -213,8 +226,7 @@ function Win({ win }: { win: WinState }) {
   const onUp = (e: RPointerEvent<HTMLDivElement>) => {
     const d = drag.current;
     drag.current = null;
-    const el = e.currentTarget.closest('.win');
-    el?.classList.remove('dragging');
+    e.currentTarget.closest('.win')?.classList.remove('dragging');
     if (!d) return;
     const canvas = document.querySelector('.canvas');
     if (canvas) {

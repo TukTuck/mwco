@@ -21,6 +21,8 @@ export function Topbar() {
   const connected = useDeck((s) => s.connected);
   const connect = useDeck((s) => s.connect);
   const setLauncher = useDeck((s) => s.setLauncher);
+  const panelOpen = useDeck((s) => s.panelOpen);
+  const setPanelOpen = useDeck((s) => s.setPanelOpen);
 
   const zoomBy = (f: number) => {
     const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
@@ -43,6 +45,9 @@ export function Topbar() {
           <button onClick={() => zoomBy(1.2)}>＋</button>
           <button onClick={() => setZoom({ x: 0, y: 0, s: 1 })}>⌂</button>
         </div>
+      ) : null}
+      {view === 'uebersicht' ? (
+        <button className={`conn-btn${panelOpen ? ' on' : ''}`} onClick={() => setPanelOpen(!panelOpen)}>Linien</button>
       ) : null}
       <div className="tb-conn">
         <input value={connUrl} onChange={(e) => setConnUrl(e.target.value)} spellCheck={false} />
