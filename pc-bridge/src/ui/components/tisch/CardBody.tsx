@@ -5,6 +5,7 @@
 import type { CardKey } from '../../data';
 import { INSTANCES, LOGS, ROUTES } from '../../data';
 import paulImg from '../../assets/paul.png';
+import { PaulChat, LiveTerminal } from './Live';
 
 export function CardRows({ k }: { k: CardKey }) {
   if (k === 'tausch')
@@ -68,25 +69,7 @@ export function CardRows({ k }: { k: CardKey }) {
 }
 
 export function CardFull({ k }: { k: CardKey }) {
-  if (k === 'paul')
-    return (
-      <>
-        <div className="taskcard">
-          <div className="t"><span className="dot" style={{ background: 'var(--orch)' }} />Laufende Tasks vom Orchestrator</div>
-          <div className="d">3 offen, 1 läuft. Soll ich sie hier reinholen?</div>
-          <div className="steps">
-            <div className="step done"><span className="cb">✓</span>Verbunden mit MCP-Bus</div>
-            <div className="step done"><span className="cb">✓</span>Modell geladen (7B Q4)</div>
-            <div className="step"><span className="cb" />Tasks anzeigen</div>
-          </div>
-        </div>
-        <div className="chat-input">
-          <div className="chips"><span className="chip on">Auto</span><span className="chip">Free</span><span className="chip">Code</span></div>
-          <input placeholder="Paul fragen…" />
-          <button>↑</button>
-        </div>
-      </>
-    );
+  if (k === 'paul') return <PaulChat />;
   if (k === 'llm')
     return (
       <>
@@ -127,14 +110,7 @@ export function CardFull({ k }: { k: CardKey }) {
         <div className="placeholder-area">Reines Chat-Interface.<br />Kein MCP, kein System-Zugriff.</div>
       </>
     );
-  if (k === 'terminal')
-    return (
-      <div className="term">
-        <div><span className="p">~/mwco $</span> git status</div>
-        <div className="c">On branch arena/01a0c3a9-mwco</div>
-        <div><span className="p">~/mwco $</span> ▊</div>
-      </div>
-    );
+  if (k === 'terminal') return <LiveTerminal />;
   if (k === 'logs')
     return (
       <div className="logs">

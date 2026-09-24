@@ -50,6 +50,8 @@ pc-bridge/
 │       ├── index.css          # Gesamtes Theme (warmes Dunkel, Glas, eckig)
 │       ├── App.tsx            # Root: Sidebar + Topbar + Ansicht + Launcher-Hotkey
 │       ├── data.ts            # Karten-Metadaten + Demo-Daten (Logs, Tasks, Routen)
+│       ├── bridge.ts          # EIN Modul UI↔Backend (agentDeck/IPC, sonst Stub-Fallback)
+│       ├── useBridge.ts       # Hook: lädt echte Daten über bridge, sonst Fallback
 │       ├── assets/
 │       │   └── paul.png       # Paul-Avatar (Alien-Platzhalter)
 │       ├── components/
@@ -59,6 +61,7 @@ pc-bridge/
 │       │   └── tisch/
 │       │       ├── TischView.tsx # Kartentisch: zoom/pan, Karten, Fenster, Linien
 │       │       └── CardBody.tsx  # Karten-Inhalt (kompakt + voll)
+│       │       └── Live.tsx      # Stateful Paul-Chat + Terminal (an bridge)
 │       ├── store/
 │       │   └── deck.ts        # zustand-Store: Ansicht, Karten, Fenster, Zoom
 │       ├── views/             # Menü-Ansichten

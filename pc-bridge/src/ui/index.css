@@ -200,6 +200,11 @@ button{font-family:inherit}
 .term{font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.7;color:#cfc4ae}
 .term .p{color:var(--terminal)}
 .term .c{color:var(--faint)}
+.term-input{
+  flex:1;background:transparent;border:none;border-bottom:1px solid var(--edge);
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:2px 4px;
+}
+.term-input:focus{outline:none;border-bottom-color:var(--terminal)}
 .logs{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.9}
 .logs .lvl{display:inline-block;width:56px;font-weight:600}
 .logs .ts{display:inline-block;width:64px;color:var(--faint)}
@@ -274,3 +279,44 @@ button{font-family:inherit}
 .switch .sl::before{content:'';position:absolute;width:12px;height:12px;left:2px;top:2px;border-radius:3px;background:var(--faint);transition:.15s}
 .switch input:checked + .sl{background:color-mix(in srgb,var(--terminal) 18%,transparent);border-color:var(--terminal)}
 .switch input:checked + .sl::before{transform:translateX(16px);background:var(--terminal)}
+
+/* ---------- Finaler Look: schwarz, Papier, eckig ---------- */
+:root{
+  --bg:#000;
+  --side:#060606;
+  --canvas:#cdc6b6;
+  --grid-dot:rgba(35,28,20,.42);
+  --glass:rgba(10,10,10,.62);
+  --glass-strong:rgba(5,5,5,.85);
+  --edge:rgba(255,255,255,.12);
+  --edge-strong:rgba(255,255,255,.22);
+  --win:rgba(6,6,6,.88);
+  --panel:#0a0a0a;
+}
+
+/* Papier-Bogen auf schwarzem Tisch: Punkte + Linien liegen AUF dem Papier und zoomen mit */
+.canvas{
+  inset:12px;
+  background-image:
+    radial-gradient(circle, var(--grid-dot) 1.1px, transparent 1.1px),
+    linear-gradient(rgba(35,28,20,.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35,28,20,.16) 1px, transparent 1px);
+  box-shadow:0 0 0 1px rgba(255,255,255,.07), 0 18px 60px rgba(0,0,0,.8), inset 0 0 90px rgba(60,50,30,.25);
+}
+/* nur auf dem Papier: feines Faser-Rauschen */
+.canvas::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  background-size:140px 140px;
+  mix-blend-mode:multiply;
+}
+.world{z-index:1}
+.wires path{stroke:rgba(35,28,20,.45)}
+
+/* eckige Kanten überall */
+.tile,.win,.panel,.launcher,.sb-profile,.taskcard,.placeholder-area{border-radius:0}
+.tile .icon,.tile .icon img,.portrait img,.sb-profile img,.launcher .lin img{border-radius:0}
+.badge,.chip,.ctl,.btn,.sb-item,.sug,.sug .si,.step .cb,.vram,.vram .vbar,
+.tb-zoom,.tb-zoom button,.tb-conn input,.conn-btn,.paul-btn,.paul-btn img,.paul-btn kbd,
+.launcher .lin kbd,.chat-input input,.chat-input button,.frow input,
+.mini-msg .txt,.mini-msg .who,.switch .sl,.switch .sl::before{border-radius:0}
