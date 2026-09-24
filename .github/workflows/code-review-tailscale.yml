@@ -1,0 +1,45 @@
+# ──────────────────────────────────────────────────────────
+# Option A: Ollama über Tailscale erreichbar
+# ──────────────────────────────────────────────────────────
+#
+# Setup:
+# 1. Ollama-VM muss im Tailscale-Netzwerk sein
+# 2. OLLAMA_URL Secret setzen: http://<tailscale-ip>:11434/v1
+# 3. OLLAMA_MODEL Secret setzen: qwen2.5-coder:32b
+# 4. TAILSCALE_AUTHKEY Secret setzen (für GitHub Actions Tailscale-Access)
+#
+# Kein API-Key nötig! Ollama ist kostenlos und lokal.
+# Kein Code verlässt dein Netzwerk (außer der Diff geht über Tailscale).
+#
+# Aktivieren: Diese Datei umbenennen zu code-review.yml
+#             (und die andere Option löschen)
+
+name: AI Code Review (Ollama via Tailscale)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      # Tailscale verbinden damit der Runner auf die Ollama-VM zugreifen kann
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
+          tags: tag:ci
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Voller Clone für besseren Diff-Kontext
+
+      - name: AI Code Review (Robin + Ollama)
+        uses: antongulin/robin@main
+        with:
+          # Ollama hat eine OpenAI-kompatible API auf Port 11434
+          llm-api-key: "ollama"  # Ollama braucht keinen echten Key
+          llm-base-url: ${{ secrets.OLLAMA_URL }}  # z.B. http://100.x.x.x:11434/v1
+          llm-model: ${{ secrets.OLLAMA_MODEL }}    # z.B. qwen2.5-coder:32b

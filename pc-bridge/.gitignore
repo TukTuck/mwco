@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-ui/
+release/
+*.log
+.env
+config/local.json
+*.tsbuildinfo
+data/
