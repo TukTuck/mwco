@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
-import { LOGS } from '../data';
 import { bridge } from '../bridge';
 import { useBridge } from '../useBridge';
 
 export function ProtokolleView() {
-  const rows = useBridge(() => bridge.logs(), LOGS);
+  const rows = useBridge(() => bridge.logs(), []);
   const exportLogs = () => {
     const text = rows.map((l) => `[${l.t}] ${l.lvl.padEnd(6)} ${l.text}`).join('\n');
     const blob = new Blob([text], { type: 'text/plain' });
@@ -22,13 +21,17 @@ export function ProtokolleView() {
       </div>
       <div className="panel">
         <div className="logs big">
-          {rows.map((l, i) => (
-            <div key={i}>
-              <span className="ts">{l.t}</span>
-              <span className={`lvl ${l.lvl.toLowerCase()}`}>{l.lvl}</span>
-              {l.text}
-            </div>
-          ))}
+          {rows.length === 0 ? (
+            <div className="dim">Keine Protokolle — Backend nicht verbunden oder noch keine Logs</div>
+          ) : (
+            rows.map((l, i) => (
+              <div key={i}>
+                <span className="ts">{l.t}</span>
+                <span className={`lvl ${l.lvl.toLowerCase()}`}>{l.lvl}</span>
+                {l.text}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

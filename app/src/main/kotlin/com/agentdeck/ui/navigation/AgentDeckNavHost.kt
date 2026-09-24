@@ -45,32 +45,8 @@ fun AgentDeckNavHost(
             val viewModel: DashboardViewModel = koinViewModel()
             val state by viewModel.stateFlow.collectAsState()
 
-            val defaultAgents = listOf(
-                Agent(
-                    id = "arena_main",
-                    name = "Arena AI",
-                    capabilities = listOf("coding", "file_editing", "testing"),
-                    bestFor = listOf("Android implementation", "code changes"),
-                    status = AgentStatus.ONLINE,
-                    config = AgentConfig.Arena()
-                ),
-                Agent(
-                    id = "claude_review",
-                    name = "Claude",
-                    capabilities = listOf("architecture_review", "risk_analysis"),
-                    bestFor = listOf("review", "planning"),
-                    status = AgentStatus.ONLINE,
-                    config = AgentConfig.Claude(apiKey = "")
-                ),
-                Agent(
-                    id = "chatgpt_structuring",
-                    name = "ChatGPT",
-                    capabilities = listOf("json_design", "debugging"),
-                    bestFor = listOf("protocol design", "structured output"),
-                    status = AgentStatus.ONLINE,
-                    config = AgentConfig.ChatGPT(apiKey = "")
-                )
-            )
+            // Keine Demo-Daten mehr — Agents kommen aus Registry, leer bis echte Keys konfiguriert
+            val defaultAgents = emptyList<Agent>()
 
             DashboardScreen(
                 state = state,
@@ -127,17 +103,8 @@ fun AgentDeckNavHost(
         }
 
         composable(Screen.Logs.route) {
-            // Demo-Logs für jetzt – später aus ViewModel/Repository
-            val demoLogs = listOf(
-                LogEntry(System.currentTimeMillis(), LogLevel.INFO, "Orchestrator", "Orchestrierung gestartet"),
-                LogEntry(System.currentTimeMillis() - 1000, LogLevel.INFO, "LLM", "Task-Decomposition via Nvidia NIM"),
-                LogEntry(System.currentTimeMillis() - 2000, LogLevel.DEBUG, "Parser", "3 Tasks aus Blueprint extrahiert"),
-                LogEntry(System.currentTimeMillis() - 3000, LogLevel.INFO, "Dispatcher", "Task 1 an Claude dispatched"),
-                LogEntry(System.currentTimeMillis() - 5000, LogLevel.WARN, "RateLimiter", "80% des Rate-Limits erreicht"),
-                LogEntry(System.currentTimeMillis() - 8000, LogLevel.INFO, "Claude", "Task 1 abgeschlossen (12s, 2340 Tokens)"),
-                LogEntry(System.currentTimeMillis() - 10000, LogLevel.ERROR, "ChatGPT", "HTTP 429: Rate limit exceeded"),
-                LogEntry(System.currentTimeMillis() - 12000, LogLevel.INFO, "Orchestrator", "Retry Task 2 (Versuch 1/3)"),
-            )
+            // Keine Demo-Logs mehr — leer bis echte Logs vorhanden
+            val demoLogs = emptyList<LogEntry>()
             LogViewerScreen(
                 logs = demoLogs,
                 onNavigateBack = { navController.popBackStack() }

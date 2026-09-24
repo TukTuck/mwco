@@ -2,11 +2,9 @@
 /**
  * Bridge-Schicht: EIN Modul, über das die UI mit dem Backend spricht.
  * - In Electron: nutzt window.agentDeck (IPC → Main → Services).
- * - Im Browser (Vorschau) oder bei Fehlern: Demo-/Stub-Fallback, damit alles testbar bleibt.
- *
- * Damit ist die UI "rudimentär funktionierend" verknüpft, ohne neue Features.
+ * - Kein Demo-Fallback mehr — liefert leere Listen wenn Backend nicht verfügbar.
  */
-import { LOGS, TASKS, INSTANCES, type LogLine, type Task, type Instance } from './data';
+import { type LogLine, type Task, type Instance } from './data';
 
 const has = (): boolean =>
   typeof window !== 'undefined' && !!(window as unknown as { agentDeck?: unknown }).agentDeck;
@@ -28,7 +26,7 @@ function fmtTime(ts: number): string {
 }
 function mapTaskStatus(s: string): Task['status'] {
   const x = (s || '').toLowerCase();
-  if (x.includes('run') || x.includes('läuf') || x.includes('active')) return 'läuft';
+  if (x.includes('run') || x.includes('läuft') || x.includes('active')) return 'läuft';
   if (x.includes('done') || x.includes('fertig') || x.includes('complet')) return 'fertig';
   if (x.includes('fail') || x.includes('error') || x.includes('fehler')) return 'fehler';
   return 'offen';
@@ -37,7 +35,6 @@ function mapTaskStatus(s: string): Task['status'] {
 export const bridge = {
   available: has,
 
-  /** Paul-Chat: echt in Electron, sonst Stub. */
   async paulChat(message: string): Promise<string> {
     if (has()) {
       try {
@@ -50,7 +47,6 @@ export const bridge = {
     return stubPaul(message);
   },
 
-  /** Logs/Protokolle: audit-Log echt, sonst Demo. */
   async logs(): Promise<LogLine[]> {
     if (has()) {
       try {
@@ -62,12 +58,11 @@ export const bridge = {
             text: `${x.actor}: ${x.action}${x.target ? ' ' + x.target : ''}${x.details ? ' – ' + x.details : ''}`,
           }));
         }
-      } catch { /* fallback */ }
+      } catch { /* leer */ }
     }
-    return LOGS;
+    return [];
   },
 
-  /** Tasks: Orchestrator/DB echt, sonst Demo. */
   async tasks(): Promise<Task[]> {
     if (has()) {
       try {
@@ -77,18 +72,17 @@ export const bridge = {
             id: x.id, titel: x.title, status: mapTaskStatus(x.status), worker: x.agentId || '–',
           }));
         }
-      } catch { /* fallback */ }
+      } catch { /* leer */ }
       try {
         const r = await window.agentDeck.db.tasks.list();
         if (Array.isArray(r) && r.length) {
           return r.map((x) => ({ id: x.id, titel: x.title, status: mapTaskStatus(x.status), worker: x.agentId || '–' }));
         }
-      } catch { /* fallback */ }
+      } catch { /* leer */ }
     }
-    return TASKS;
+    return [];
   },
 
-  /** Austausch/Worker: Hub echt, sonst Demo. */
   async workers(): Promise<Instance[]> {
     if (has()) {
       try {
@@ -99,12 +93,11 @@ export const bridge = {
             status: (w.status || '').toLowerCase().includes('on') ? 'AKTIV' : 'WARTUNG',
           }));
         }
-      } catch { /* fallback */ }
+      } catch { /* leer */ }
     }
-    return INSTANCES;
+    return [];
   },
 
-  /** Terminal: MCP-Tool echt, sonst Echo. */
   async terminal(command: string): Promise<string> {
     if (has()) {
       try {
@@ -114,7 +107,7 @@ export const bridge = {
         if (r && Array.isArray(r.content) && r.content[0] && typeof r.content[0].text === 'string') {
           return r.content[0].text;
         }
-      } catch { /* fallback */ }
+      } catch { /* leer */ }
     }
     return `$ ${command}\n(Stub) Befehl würde hier über die TerminalBridge laufen.`;
   },

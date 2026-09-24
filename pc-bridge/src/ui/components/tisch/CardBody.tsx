@@ -11,24 +11,32 @@ export function CardRows({ k }: { k: CardKey }) {
   if (k === 'tausch')
     return (
       <>
-        {INSTANCES.slice(0, 3).map((i) => (
-          <div className="row" key={i.ip}>
-            <span className="k">{i.ip}</span>
-            <span className="grow" />
-            <span className={`badge ${i.status === 'AKTIV' ? 'on' : 'wait'}`}>{i.status}</span>
-          </div>
-        ))}
+        {INSTANCES.length === 0 ? (
+          <div className="row dim">Keine Instanzen — Backend nicht verbunden</div>
+        ) : (
+          INSTANCES.slice(0, 3).map((i) => (
+            <div className="row" key={i.ip}>
+              <span className="k">{i.ip}</span>
+              <span className="grow" />
+              <span className={`badge ${i.status === 'AKTIV' ? 'on' : 'wait'}`}>{i.status}</span>
+            </div>
+          ))
+        )}
       </>
     );
   if (k === 'logs')
     return (
       <>
-        {LOGS.slice(0, 3).map((l, i) => (
-          <div className="row" key={i}>
-            <span className={`badge ${l.lvl === 'WARN' || l.lvl === 'FEHLER' ? 'wait' : 'on'}`}>{l.lvl}</span>
-            <span className="k">{l.text}</span>
-          </div>
-        ))}
+        {LOGS.length === 0 ? (
+          <div className="row dim">Keine Logs — warte auf Backend</div>
+        ) : (
+          LOGS.slice(0, 3).map((l, i) => (
+            <div className="row" key={i}>
+              <span className={`badge ${l.lvl === 'WARN' || l.lvl === 'FEHLER' ? 'wait' : 'on'}`}>{l.lvl}</span>
+              <span className="k">{l.text}</span>
+            </div>
+          ))
+        )}
       </>
     );
   if (k === 'terminal')
@@ -78,12 +86,16 @@ export function CardFull({ k }: { k: CardKey }) {
         <div className="vlabel">5.4 / 8 GB VRAM belegt</div>
         <table className="tbl" style={{ marginTop: 10 }}>
           <tbody>
-            {ROUTES.map((r) => (
-              <tr key={r.route}>
-                <td>{r.route}</td><td>{r.ziel}</td>
-                <td><span className={`badge ${r.status === 'AKTIV' ? 'on' : 'wait'}`}>{r.status}</span></td>
-              </tr>
-            ))}
+            {ROUTES.length === 0 ? (
+              <tr><td colSpan={3} className="dim">Keine Routen — Backend liefert keine Daten</td></tr>
+            ) : (
+              ROUTES.map((r) => (
+                <tr key={r.route}>
+                  <td>{r.route}</td><td>{r.ziel}</td>
+                  <td><span className={`badge ${r.status === 'AKTIV' ? 'on' : 'wait'}`}>{r.status}</span></td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </>
@@ -92,12 +104,16 @@ export function CardFull({ k }: { k: CardKey }) {
     return (
       <table className="tbl">
         <tbody>
-          {INSTANCES.map((i) => (
-            <tr key={i.ip}>
-              <td>{i.ip}</td><td>{i.rolle}</td>
-              <td><span className={`badge ${i.status === 'AKTIV' ? 'on' : 'wait'}`}>{i.status}</span></td>
-            </tr>
-          ))}
+          {INSTANCES.length === 0 ? (
+            <tr><td colSpan={3} className="dim">Keine Instanzen — warte auf Hub</td></tr>
+          ) : (
+            INSTANCES.map((i) => (
+              <tr key={i.ip}>
+                <td>{i.ip}</td><td>{i.rolle}</td>
+                <td><span className={`badge ${i.status === 'AKTIV' ? 'on' : 'wait'}`}>{i.status}</span></td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     );
@@ -114,9 +130,13 @@ export function CardFull({ k }: { k: CardKey }) {
   if (k === 'logs')
     return (
       <div className="logs">
-        {LOGS.map((l, i) => (
-          <div key={i}><span className={`lvl ${l.lvl.toLowerCase()}`}>{l.lvl}</span>{l.text}</div>
-        ))}
+        {LOGS.length === 0 ? (
+          <div className="dim">Keine Logs — Backend nicht verbunden</div>
+        ) : (
+          LOGS.map((l, i) => (
+            <div key={i}><span className={`lvl ${l.lvl.toLowerCase()}`}>{l.lvl}</span>{l.text}</div>
+          ))
+        )}
       </div>
     );
   // orch
