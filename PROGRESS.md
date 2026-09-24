@@ -158,3 +158,14 @@
 3. Bei Blockaden: User-Input erforderlich
 
 **Hinweis:** Aktuell werden Tasks nur an Mock-Agenten gesendet. Für echte Claude/ChatGPT-Integration müssen die Agent-Clients noch gebaut werden (Option A).
+
+---
+
+## 📝 Verlauf — 2026-09-24
+
+**P1 aus Prioritätenliste genommen — gekürzt.**
+Auf Wunsch nur P0 umgesetzt (Repository-Bugs, Protokoll Handy↔PC, RateLimiter, Icons). P1 (Auth/Protokoll-Feintuning, Doku-Drift, Security-Defaults) wurde bewusst zurückgestellt.
+
+**⏰ Reminder:** Jemand soll mich an P1 erinnern — P1 nicht vergessen, nur vertagt. Wiedervorlage bei nächstem Sprint/Review.
+
+**Commit:** `7e66445 fix(P0/P1): Repository-Bugs + Protokoll + RateLimiter + Icons` (P1-Code bereits gepusht, aber aus offener Liste entfernt — gilt als erledigt/vertagt)
