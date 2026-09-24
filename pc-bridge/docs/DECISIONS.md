@@ -212,3 +212,33 @@ Jede größere Entscheidung, **warum** wir sie so getroffen haben, und welche Al
 - `gridStore.ts`/`Grid.tsx` etc. entfernt; neuer `store/deck.ts` (zustand).
 - Layout + Verbindungen sollen später in die bestehende `layouts`-Tabelle persistiert werden.
 - Offene Punkte (Verbindungen selbst setzen/benennen) stehen in `design/DESIGN_SPEC.md`.
+
+---
+
+## Verbindungs-Editor: Linien selbst setzen & benennen (22.09.2026)
+
+**Entscheidung:** Verbindungen sind keine feste Deko, sondern vom Nutzer editierbare Daten.
+`Connect.tsx` + `store/deck.ts` (conns) ermöglichen: Connect-Modus (Quelle → Ziel klicken),
+Linie benennen (Dialog), umbenennen und löschen (Panel, Topbar-Button „Linien").
+
+**Warum:**
+- Der User will selbst entscheiden, *wer mit wem* spricht und *was* die Linie bedeutet.
+- Linien als Daten (`{from,to,label,color}`) sind die Voraussetzung für spätere Persistenz
+  und für echte Bedeutung (Routing/Rechte) statt Deko.
+
+**Offen:** Persistenz der Verbindungen + Layout in die `layouts`-Tabelle.
+
+---
+
+## Authentifizierung: lokal ohne Auth, Keys für APIs, Login für Menschen (22.09.2026)
+
+**Entscheidung:** Drei Auth-Ebenen, bewusst getrennt:
+1. **Lokal (Paul 7B / Orchestrator 1.5B):** keine Auth nötig – läuft auf eigener Hardware.
+2. **Entwickler-APIs (Claude/OpenAI/Gemini):** API-Keys (in Einstellungen gespeichert).
+3. **Menschliche Web-Chats:** Login/OAuth (Google etc.) im separaten WebChat-Fenster –
+   die Maschine fasst diese Sessions nicht an.
+
+**Warum:**
+- Lokale Modelle machen das Produkt unabhängig von Anbietern/Keys (funktioniert immer).
+- Entwickler-APIs sind standardmäßig Key-basiert; OAuth ist der Weg für *Menschen*-Konten.
+- Ein echter OAuth-Flow (Token-Speicher, Refresh) ist bewusst **nicht** im MVP – erst bei Bedarf.

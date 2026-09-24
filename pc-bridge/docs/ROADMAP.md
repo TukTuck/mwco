@@ -29,16 +29,16 @@ Stand: 22. September 2026
 - Audit-Logging für alle Aktionen
 - 16/25 Tests bestanden
 
-### UI (Stream A)
-- Electron Main Process mit IPC
-- Preload Script mit sicherer Context Bridge
-- 4×3 CSS-Grid Layout-System
-- Auto-Sort Presets (Vollbild, 50/50, 2+1, 2×2)
-- Farbcodierung pro Zelle (7 Farben)
-- Dark Mode (Shadcn-Style)
-- Custom Titlebar (frameless)
-- Vite Build (158KB JS + 5.7KB CSS)
-- Tailwind CSS mit Custom Utilities
+### UI (Stream A) – Kartentisch (ersetzt altes 4×3-Grid)
+- Kartentisch: freie, zoom-/pannbare Fläche (Papier-Look auf schwarz), Karten in 3 Stufen
+  (Node → aufgeklappt → Fenster), Verbindungslinien mit Aktivitäts-Flow
+- Linke Sidebar + obere Topbar (bewusst keine rechte/untere Leiste), eckig, warmes Schwarz
+- Paul-Launcher (Ctrl+Shift+P), Paul-Avatar (Alien)
+- 5 Ansichten: Protokolle (Export), Einstellungen, Austausch, Tasks, Zeitplan
+- **Verknüpfung:** `bridge.ts` (UI↔Backend über IPC, Stub-Fallback), Live-Paul-Chat + Live-Terminal,
+  Logs/Tasks/Austausch holen echte Daten (`useBridge`)
+- **Verbindungs-Editor:** Linien selbst setzen/benennen/löschen (`Connect.tsx`)
+- zustand-Store (`deck.ts`), Vite Build
 
 ### Paul + Orchestrator (Stream C)
 - PaulEngine: Ollama LLM Chat (Qwen2.5-7B Q4)

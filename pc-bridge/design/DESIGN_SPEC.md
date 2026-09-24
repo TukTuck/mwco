@@ -17,8 +17,8 @@ Lebender Prototyp: `index.html` (im Browser öffnen, kein Build nötig).
 Paul (MCP-Chat), LLM-Routen, Austausch (Mesh/IP-Tabellen), WebChat (kein MCP), Terminal, Logs, Orchestrator.
 
 ## OFFEN (als nächstes)
-- [ ] **Verbindungen selbst setzen:** von Port zu Port ziehen, eigene Linien erstellen/löschen.
-- [ ] **Verbindungen benennen:** eigene Labels pro Linie (was fließt da?).
+- [x] **Verbindungen selbst setzen:** Connect-Modus (Quelle → Ziel klicken), Linien erstellen/löschen. ✅ (22.09.2026, `Connect.tsx`)
+- [x] **Verbindungen benennen:** eigene Labels pro Linie im Dialog + Panel. ✅ (22.09.2026, `Connect.tsx`)
 - [ ] Karten selbst anlegen/löschen/umbenennen („alles Mögliche").
 - [ ] Persistenz: Tisch-Layout + Verbindungen in SQLite (`layouts`-Tabelle existiert bereits im Backend).
 - [x] Prototyp in die echte React-UI von `pc-bridge/src/ui` portieren. ✅ (22.09.2026: Sidebar, Topbar, Tisch, Launcher, alle Ansichten gebaut; `npm run dev:ui` zum Testen)

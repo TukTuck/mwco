@@ -62,8 +62,9 @@ pc-bridge/
 │       │       ├── TischView.tsx # Kartentisch: zoom/pan, Karten, Fenster, Linien
 │       │       └── CardBody.tsx  # Karten-Inhalt (kompakt + voll)
 │       │       └── Live.tsx      # Stateful Paul-Chat + Terminal (an bridge)
+│       │       └── Connect.tsx   # Verbindungs-Editor: Linien setzen/benennen/löschen
 │       ├── store/
-│       │   └── deck.ts        # zustand-Store: Ansicht, Karten, Fenster, Zoom
+│       │   └── deck.ts        # zustand-Store: Ansicht, Karten, Fenster, Zoom, Verbindungen
 │       ├── views/             # Menü-Ansichten
 │       │   ├── ProtokolleView.tsx
 │       │   ├── EinstellungenView.tsx
