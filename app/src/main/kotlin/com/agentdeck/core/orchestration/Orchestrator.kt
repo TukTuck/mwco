@@ -180,6 +180,7 @@ class Orchestrator(
             llmTasks.map { llmTask ->
                 Task(
                     id = llmTask.id.ifBlank { UUID.randomUUID().toString().take(8) },
+                    blueprintId = blueprint.id,
                     title = llmTask.title,
                     description = llmTask.description,
                     agentId = llmTask.agentId.ifBlank { agentClients.keys.firstOrNull() ?: "unknown" },
@@ -212,6 +213,7 @@ class Orchestrator(
             blueprint.modules.mapIndexed { index, module ->
                 Task(
                     id = "task_${String.format("%03d", index + 1)}",
+                    blueprintId = blueprint.id,
                     title = "Implementiere $module",
                     description = "Erstelle das Modul $module gemäß Blueprint-Spezifikation.\n\nBlueprint-Kontext:\n${blueprint.goal}",
                     agentId = selectAgentForModule(module, defaultAgent),
@@ -225,6 +227,7 @@ class Orchestrator(
             listOf(
                 Task(
                     id = "task_001",
+                    blueprintId = blueprint.id,
                     title = blueprint.project,
                     description = blueprint.goal,
                     agentId = defaultAgent,

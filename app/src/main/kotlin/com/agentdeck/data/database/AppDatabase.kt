@@ -2,7 +2,19 @@
 package com.agentdeck.data.database
 
 import androidx.room.*
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
+
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // v1 hatte bereits projectId/blueprintId Spalten, aber Domain nutzte metadata/default-Hack.
+        // Migration sichert dass alte Zeilen mit leerem ProjectId/BlueprintId auf "default" gesetzt werden.
+        // Kein Schema-Change nötig, nur Daten-Konsistenz.
+        db.execSQL("UPDATE blueprints SET projectId = 'default' WHERE projectId IS NULL OR projectId = ''")
+        db.execSQL("UPDATE tasks SET blueprintId = 'default' WHERE blueprintId IS NULL OR blueprintId = ''")
+    }
+}
 
 /**
  * Room database for persisting blueprints, tasks, and agent configurations.
@@ -14,7 +26,7 @@ import kotlinx.coroutines.flow.Flow
         AgentEntity::class,
         ProjectEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

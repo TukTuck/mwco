@@ -30,30 +30,48 @@ class TaskRepository(
         return dao.getById(id)?.toDomain()
     }
     
-    suspend fun saveAll(tasks: List<Task>, blueprintId: String = "default") {
-        dao.insertAll(tasks.map { it.toEntity(blueprintId) })
+    suspend fun saveAll(tasks: List<Task>) {
+        dao.insertAll(tasks.map { it.toEntity() })
     }
 
-    // Rückwärtskompatibel: alter Aufruf ohne blueprintId
-    @Deprecated("Use saveAll(tasks, blueprintId) instead", ReplaceWith("saveAll(tasks, blueprintId)"))
-    suspend fun saveAllWithDefault(tasks: List<Task>) = saveAll(tasks, "default")
+    @Deprecated("blueprintId ist jetzt Feld in Task - direkt in Task setzen", ReplaceWith("saveAll(tasks.map { it.copy(blueprintId = blueprintId) })"))
+    suspend fun saveAll(tasks: List<Task>, blueprintId: String) {
+        dao.insertAll(tasks.map { 
+            val t = if (it.blueprintId == "default" && blueprintId != "default") it.copy(blueprintId = blueprintId) else it
+            t.toEntity() 
+        })
+    }
+
+    suspend fun saveAllWithDefault(tasks: List<Task>) = saveAll(tasks)
     
-    suspend fun update(task: Task, blueprintId: String = "default") {
-        dao.update(task.toEntity(blueprintId))
+    suspend fun update(task: Task) {
+        dao.update(task.toEntity())
+    }
+
+    @Deprecated("blueprintId ist jetzt Feld in Task", ReplaceWith("update(task.copy(blueprintId = blueprintId))"))
+    suspend fun update(task: Task, blueprintId: String) {
+        val t = if (task.blueprintId == "default" && blueprintId != "default") task.copy(blueprintId = blueprintId) else task
+        dao.update(t.toEntity())
     }
     
     suspend fun updateStatus(taskId: String, status: TaskStatus) {
         dao.updateStatus(taskId, status.name)
     }
     
-    suspend fun delete(task: Task, blueprintId: String = "default") {
-        dao.delete(task.toEntity(blueprintId))
+    suspend fun delete(task: Task) {
+        dao.delete(task.toEntity())
+    }
+
+    @Deprecated("blueprintId ist jetzt Feld in Task", ReplaceWith("delete(task.copy(blueprintId = blueprintId))"))
+    suspend fun delete(task: Task, blueprintId: String) {
+        val t = if (task.blueprintId == "default" && blueprintId != "default") task.copy(blueprintId = blueprintId) else task
+        dao.delete(t.toEntity())
     }
     
-    private fun Task.toEntity(blueprintId: String = "default"): TaskEntity {
+    private fun Task.toEntity(): TaskEntity {
         return TaskEntity(
             id = id,
-            blueprintId = blueprintId,
+            blueprintId = blueprintId.ifBlank { "default" },
             title = title,
             description = description,
             agentId = agentId,
@@ -73,6 +91,7 @@ class TaskRepository(
     private fun TaskEntity.toDomain(): Task {
         return Task(
             id = id,
+            blueprintId = blueprintId,
             title = title,
             description = description,
             agentId = agentId,

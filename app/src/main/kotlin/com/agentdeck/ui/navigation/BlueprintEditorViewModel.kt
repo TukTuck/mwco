@@ -122,6 +122,7 @@ class BlueprintEditorViewModel(
         
         return Blueprint(
             id = UUID.randomUUID().toString(),
+            projectId = "default",
             project = project,
             goal = goal,
             nonGoal = nonGoal,

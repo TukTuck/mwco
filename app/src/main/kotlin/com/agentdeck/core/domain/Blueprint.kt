@@ -18,6 +18,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Blueprint(
     val id: String,
+    val projectId: String = "default",
     val project: String,
     val goal: String,
     val nonGoal: String? = null,

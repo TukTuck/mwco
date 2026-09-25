@@ -25,6 +25,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Task(
     val id: String,
+    val blueprintId: String = "default",
     val title: String,
     val description: String,
     val agentId: String,

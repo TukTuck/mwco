@@ -31,7 +31,8 @@ val appModule = module {
             androidContext(),
             AppDatabase::class.java,
             "agent_deck_db"
-        ).fallbackToDestructiveMigration().build()
+        ).addMigrations(com.agentdeck.data.database.MIGRATION_1_2)
+         .fallbackToDestructiveMigration().build()
     }
     
     single { get<AppDatabase>().blueprintDao() }

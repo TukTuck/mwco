@@ -33,8 +33,12 @@ class BlueprintRepository(
     }
     
     private fun Blueprint.toEntity(): BlueprintEntity {
-        // projectId aus metadata falls vorhanden, sonst "default" — MVP hat kein echtes Projekt-Konzept
-        val effectiveProjectId = metadata["projectId"] ?: "default"
+        // projectId ist jetzt echtes Domain-Feld, metadata wird nur noch als Fallback für alte Daten gelesen
+        val effectiveProjectId = when {
+            projectId != "default" -> projectId
+            metadata["projectId"] != null -> metadata["projectId"]!!
+            else -> "default"
+        }
         return BlueprintEntity(
             id = id,
             projectId = effectiveProjectId,
@@ -52,6 +56,7 @@ class BlueprintRepository(
     private fun BlueprintEntity.toDomain(): Blueprint {
         return Blueprint(
             id = id,
+            projectId = projectId,
             project = project,
             goal = goal,
             nonGoal = nonGoal,
